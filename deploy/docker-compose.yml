@@ -1,0 +1,28 @@
+services:
+  frontend:
+    build:
+      context: ../frontend
+    ports:
+      - "3000:80"
+
+  gateway:
+    build:
+      context: ../gateway
+    ports:
+      - "8080:8080"
+
+  user-service:
+    build:
+      context: ../services/user_service
+
+  listing-service:
+    build:
+      context: ../services/listing_service
+
+  order-service:
+    build:
+      context: ../services/order_service
+
+  postgres:
+    image: postgres:16
+  
