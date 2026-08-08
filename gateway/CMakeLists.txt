@@ -17,6 +17,9 @@ target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 
+# Functional tests (pytest, drives service_client against the real binary)
+userver_testsuite_add_simple()
+
 # Install
 include(GNUInstallDirs)
 

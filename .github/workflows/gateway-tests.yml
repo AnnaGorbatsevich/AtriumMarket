@@ -1,0 +1,35 @@
+name: gateway tests
+
+on:
+  push:
+    paths:
+      - 'gateway/**'
+      - '.github/workflows/gateway-tests.yml'
+  pull_request:
+    paths:
+      - 'gateway/**'
+      - '.github/workflows/gateway-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/userver-framework/ubuntu-24.04-userver:latest
+      options: --user 1000:1000
+    env:
+      HOME: /tmp
+    defaults:
+      run:
+        working-directory: gateway
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j "$(nproc)" --target gateway
+
+      - name: Test
+        run: ctest --test-dir build -V
