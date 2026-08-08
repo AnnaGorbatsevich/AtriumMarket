@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/userver-framework/ubuntu-24.04-userver:latest
-      options: --user 1000:1000
-    env:
-      HOME: /tmp
     defaults:
       run:
         working-directory: gateway
@@ -32,4 +29,6 @@ jobs:
         run: cmake --build build -j "$(nproc)" --target gateway
 
       - name: Test
-        run: ctest --test-dir build -V
+        run: |
+          chown -R nobody:nogroup .
+          su nobody -s /bin/sh -c 'HOME=/tmp ctest --test-dir build -V'
