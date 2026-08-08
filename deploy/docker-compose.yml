@@ -4,25 +4,34 @@ services:
       context: ../frontend
     ports:
       - "3000:80"
+    depends_on:
+      - gateway
 
   gateway:
     build:
       context: ../gateway
     ports:
       - "8080:8080"
+    depends_on:
+      - user-service
 
   user-service:
     build:
       context: ../services/user_service
-
-  listing-service:
-    build:
-      context: ../services/listing_service
-
-  order-service:
-    build:
-      context: ../services/order_service
+    environment:
+      DB_CONNECTION: postgresql://atrium:atrium@postgres:5432/atrium_market
+    depends_on:
+      - postgres
 
   postgres:
     image: postgres:16
-  
+    environment:
+      POSTGRES_USER: atrium
+      POSTGRES_PASSWORD: atrium
+      POSTGRES_DB: atrium_market
+    volumes:
+      - ../services/user_service/postgresql/schemas:/docker-entrypoint-initdb.d
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,0 +1,7 @@
+worker-threads: 4
+worker-fs-threads: 2
+logger-level: info
+
+server-port: 8080
+
+user-service-url: 'http://user-service:8090/v1/register'
