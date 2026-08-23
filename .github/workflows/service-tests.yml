@@ -23,10 +23,3 @@ jobs:
           chown -R nobody:nogroup .
           su nobody -s /bin/sh -c 'HOME=/tmp ctest --test-dir build --output-on-failure'
 
-      - name: Publish test summary
-        if: always()
-        run: |
-          find build -name pytest-junit.xml | while read -r report; do
-            heading=$(dirname "$report" | sed 's#^build/##')
-            python3 .github/scripts/junit_to_summary.py "$report" "$heading" >> "$GITHUB_STEP_SUMMARY"
-          done
