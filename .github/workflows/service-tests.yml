@@ -1,0 +1,49 @@
+name: service tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.find.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: find
+        run: |
+          services=$(grep -rl 'userver_testsuite_add_simple' --include=CMakeLists.txt . \
+            | xargs -n1 dirname \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Found services: $services"
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: discover
+    if: needs.discover.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/userver-framework/ubuntu-24.04-userver:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.discover.outputs.services) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Test
+        run: |
+          chown -R nobody:nogroup .
+          su nobody -s /bin/sh -c 'HOME=/tmp ctest --test-dir build -V'
