@@ -5,35 +5,10 @@ on:
   pull_request:
 
 jobs:
-  discover:
-    runs-on: ubuntu-latest
-    outputs:
-      services: ${{ steps.find.outputs.services }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: find
-        run: |
-          services=$(grep -rl 'userver_testsuite_add_simple' --include=CMakeLists.txt . \
-            | xargs -n1 dirname \
-            | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "Found services: $services"
-          echo "services=$services" >> "$GITHUB_OUTPUT"
-
   test:
-    needs: discover
-    if: needs.discover.outputs.services != '[]'
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/userver-framework/ubuntu-24.04-userver:latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service: ${{ fromJson(needs.discover.outputs.services) }}
-    defaults:
-      run:
-        working-directory: ${{ matrix.service }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -50,9 +25,8 @@ jobs:
 
       - name: Publish test summary
         if: always()
-        working-directory: ${{ github.workspace }}
         run: |
-          python3 .github/scripts/junit_to_summary.py \
-            "${{ matrix.service }}/build/pytest-junit.xml" \
-            "${{ matrix.service }}" \
-            >> "$GITHUB_STEP_SUMMARY"
+          find build -name pytest-junit.xml | while read -r report; do
+            heading=$(dirname "$report" | sed 's#^build/##')
+            python3 .github/scripts/junit_to_summary.py "$report" "$heading" >> "$GITHUB_STEP_SUMMARY"
+          done
