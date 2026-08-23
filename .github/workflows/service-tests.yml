@@ -46,4 +46,13 @@ jobs:
       - name: Test
         run: |
           chown -R nobody:nogroup .
-          su nobody -s /bin/sh -c 'HOME=/tmp ctest --test-dir build -V'
+          su nobody -s /bin/sh -c 'HOME=/tmp ctest --test-dir build --output-on-failure'
+
+      - name: Publish test summary
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 .github/scripts/junit_to_summary.py \
+            "${{ matrix.service }}/build/pytest-junit.xml" \
+            "${{ matrix.service }}" \
+            >> "$GITHUB_STEP_SUMMARY"
