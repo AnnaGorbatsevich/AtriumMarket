@@ -12,26 +12,7 @@ services:
       context: ../gateway
     ports:
       - "8080:8080"
-    depends_on:
-      - user-service
 
-  user-service:
-    build:
-      context: ../services/user_service
-    environment:
-      DB_CONNECTION: postgresql://atrium:atrium@postgres:5432/atrium_market
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: atrium
-      POSTGRES_PASSWORD: atrium
-      POSTGRES_DB: atrium_market
-    volumes:
-      - ../services/user_service/postgresql/schemas:/docker-entrypoint-initdb.d
-      - postgres-data:/var/lib/postgresql/data
-
-volumes:
-  postgres-data:
+# postgres and user-service removed for now - services/user_service/ has no
+# implementation at the moment (just an empty Dockerfile), and nothing else
+# uses postgres. Re-add both once it's rebuilt.
