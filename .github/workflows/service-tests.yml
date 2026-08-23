@@ -1,0 +1,25 @@
+name: service tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/userver-framework/ubuntu-24.04-userver:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Test
+        run: |
+          chown -R nobody:nogroup .
+          su nobody -s /bin/sh -c 'HOME=/tmp ctest --test-dir build --output-on-failure'
+

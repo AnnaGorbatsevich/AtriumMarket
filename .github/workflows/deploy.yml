@@ -1,0 +1,45 @@
+name: Deploy to Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Тег образов для релиза (напр. sha-abc123 или latest)'
+        required: true
+        default: 'latest'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production      # даёт отдельный набор secrets для прод-сервера
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set lowercase image owner
+        run: echo "IMAGE_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Copy compose file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "deploy/docker-compose.prod.yml"
+          target: "~/atrium-market"
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: IMAGE_OWNER,IMAGE_TAG
+          script: |
+            cd ~/atrium-market/deploy
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+          IMAGE_OWNER: ${{ env.IMAGE_OWNER }}

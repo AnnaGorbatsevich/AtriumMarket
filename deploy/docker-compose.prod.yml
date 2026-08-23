@@ -1,0 +1,14 @@
+services:
+  frontend:
+    image: ghcr.io/${IMAGE_OWNER}/atriummarket-frontend:${IMAGE_TAG}
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    depends_on:
+      - gateway
+
+  gateway:
+    image: ghcr.io/${IMAGE_OWNER}/atriummarket-gateway:${IMAGE_TAG}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
