@@ -13,10 +13,10 @@ const SuccessCard = ({ result, onRestart }) => (
           </svg>
         </div>
         <p className="success-text">
-          Аккаунт {result.role === 'seller' ? 'продавца' : 'покупателя'} «{result.name}» успешно зарегистрирован.
+          Аккаунт {result.role === 'seller' ? 'продавца' : 'покупателя'} «{result.name}» успешно вошли.
         </p>
         <p className="success-subtext">{result.email}</p>
-        <button className="btn" onClick={onRestart}>Зарегистрировать ещё один аккаунт</button>
+        <button className="btn" onClick={onRestart}>Выйти</button>
       </div>
     </div>
   </div>

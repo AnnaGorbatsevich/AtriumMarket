@@ -10,6 +10,9 @@ include_directories(src)
 add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/register_proxy.hpp
     src/handlers/register_proxy.cpp
+    src/handlers/hello.hpp
+    src/handlers/login_proxy.hpp
+    src/handlers/login_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
 

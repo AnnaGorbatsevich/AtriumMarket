@@ -5,6 +5,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+ARG GATEWAY_BASE_URL=http://localhost:8080
+ENV GATEWAY_BASE_URL=$GATEWAY_BASE_URL
 RUN npm run build
 
 FROM nginx:alpine

@@ -1,4 +1,4 @@
-#include "register_proxy.hpp"
+#include "login_proxy.hpp"
 
 #include <atomic>
 
@@ -15,9 +15,9 @@ namespace gateway {
 
 namespace {
 
-constexpr std::string_view kRequiredFields[] = {"role", "fullName", "email", "phone", "password"};
+constexpr std::string_view kRequiredFields[] = {"email", "password"};
 
-void ValidateRegistrationPayload(const userver::formats::json::Value& payload) {
+void ValidateLoginPayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
         const auto value = payload[std::string{field}].As<std::string>({});
         if (value.empty()) {
@@ -28,16 +28,14 @@ void ValidateRegistrationPayload(const userver::formats::json::Value& payload) {
     }
 }
 
-userver::formats::json::Value MockAuthServiceRegister(const userver::formats::json::Value& payload) {
+userver::formats::json::Value MockAuthServiceLogin(const userver::formats::json::Value& payload) {
     static std::atomic<std::uint64_t> next_id{1};
 
-    const auto role = payload["role"].As<std::string>();
+    const auto password = payload["password"].As<std::string>();
     const auto email = payload["email"].As<std::string>();
 
     userver::formats::json::ValueBuilder result;
     result["status"] = "ok";
-    result["userId"] = fmt::format("stub-{}", next_id++);
-    result["role"] = role;
     result["email"] = email;
     return result.ExtractValue();
 }
@@ -51,7 +49,7 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
 
 }  // namespace
 
-std::string RegisterProxyHandler::HandleRequestThrow(
+std::string LoginProxyHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
     userver::server::request::RequestContext&
 ) const {
@@ -71,9 +69,9 @@ std::string RegisterProxyHandler::HandleRequestThrow(
         );
     }
 
-    ValidateRegistrationPayload(payload);
+    ValidateLoginPayload(payload);
 
-    const auto result = MockAuthServiceRegister(payload);
+    const auto result = MockAuthServiceLogin(payload);
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(result);
