@@ -11,7 +11,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production      # даёт отдельный набор secrets для прод-сервера
+    environment: production
     permissions:
       contents: read
     steps:
