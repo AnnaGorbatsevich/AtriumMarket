@@ -1,21 +1,22 @@
 cmake_minimum_required(VERSION 3.12...3.31)
-project(gateway CXX)
+project(user_service CXX)
 
+# Guarded: see gateway/CMakeLists.txt for why.
 if(NOT TARGET userver::core)
-    find_package(userver REQUIRED COMPONENTS core)
+    find_package(userver REQUIRED COMPONENTS core postgresql)
     userver_setup_environment()
 endif()
 
 include_directories(src)
 
 add_library(${PROJECT_NAME}_objs OBJECT
-    src/handlers/register_proxy.hpp
-    src/handlers/register_proxy.cpp
     src/handlers/hello.hpp
-    src/handlers/login_proxy.hpp
-    src/handlers/login_proxy.cpp
+    src/handlers/register.hpp
+    src/handlers/register.cpp
+    src/security.hpp
+    src/security.cpp
 )
-target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
+target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)
 
 # The service
 add_executable(${PROJECT_NAME} src/main.cpp)

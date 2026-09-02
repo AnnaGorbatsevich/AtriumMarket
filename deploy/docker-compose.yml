@@ -14,3 +14,29 @@ services:
       context: ../gateway
     ports:
       - "8080:8080"
+
+  user_service:
+    build:
+      context: ../services/user_service
+    ports:
+      - "8090:8090"
+    environment:
+      JWT_SECRET: dev-only-secret-do-not-use-in-prod
+      DB_CONNECTION_STRING: postgresql://user_service:devpassword@user-db:5432/atrium_users
+    depends_on:
+      - user-db
+
+  user-db:
+    build:
+      context: ../services/user_service/db
+    environment:
+      POSTGRES_USER: user_service
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: atrium_users
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  user-db-data:

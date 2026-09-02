@@ -12,7 +12,15 @@ jobs:
       packages: write
     strategy:
       matrix:
-        service: [frontend, gateway]
+        include:
+          - service: frontend
+            context: frontend
+          - service: gateway
+            context: gateway
+          - service: user_service
+            context: services/user_service
+          - service: user-db
+            context: services/user_service/db
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +42,7 @@ jobs:
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.service }}
+          context: ${{ matrix.context }}
           push: true
           build-args: |
             GATEWAY_BASE_URL=${{ vars.GATEWAY_BASE_URL }}
