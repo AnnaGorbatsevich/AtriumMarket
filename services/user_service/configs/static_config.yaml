@@ -27,5 +27,10 @@ components_manager:
             method: GET,POST,OPTIONS
             task_processor: main-task-processor
 
+        handler-register:
+            path: /register
+            method: POST,OPTIONS
+            task_processor: main-task-processor
+
 
 config_vars: /app/configs/config_vars.yaml

@@ -20,18 +20,20 @@ services:
       context: ../services/user_service
     ports:
       - "8090:8090"
+    environment:
+      JWT_SECRET: dev-only-secret-do-not-use-in-prod
     depends_on:
       - user-db
 
   user-db:
-    image: postgres:16-alpine
+    build:
+      context: ../services/user_service/db
     environment:
       POSTGRES_USER: user_service
       POSTGRES_PASSWORD: devpassword
       POSTGRES_DB: atrium_users
     volumes:
       - user-db-data:/var/lib/postgresql/data
-      - ../services/user_service/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
 

@@ -35,7 +35,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: IMAGE_OWNER,IMAGE_TAG
+          envs: IMAGE_OWNER,IMAGE_TAG,JWT_SECRET,DB_PASSWORD
           script: |
             cd ~/atrium-market/deploy
             docker compose -f docker-compose.prod.yml pull
@@ -43,3 +43,5 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.event.inputs.image_tag }}
           IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

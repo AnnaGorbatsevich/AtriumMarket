@@ -3,10 +3,12 @@
 #include <userver/utils/daemon_run.hpp>
 
 #include "handlers/hello.hpp"
+#include "handlers/register.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
-                               .Append<user_service::HelloHandler>();
+                               .Append<user_service::HelloHandler>()
+                               .Append<user_service::RegisterHandler>();
 
     return userver::utils::DaemonMain(argc, argv, component_list);
 }

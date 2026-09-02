@@ -9,8 +9,12 @@ include_directories(src)
 
 add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/hello.hpp
+    src/handlers/register.hpp
+    src/handlers/register.cpp
+    src/security.hpp
+    src/security.cpp
 )
-target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
+target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core crypt)
 
 # The service
 add_executable(${PROJECT_NAME} src/main.cpp)

@@ -4,4 +4,4 @@ project(AtriumMarket)
 enable_testing()
 
 add_subdirectory(gateway)
-add_subdirectory(service/user_service)
+add_subdirectory(services/user_service)
