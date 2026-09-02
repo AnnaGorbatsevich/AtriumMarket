@@ -1,36 +1,36 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
-import RoleModal from './components/RoleModal';
-import RegistrationForm from './components/RegistrationForm';
-import SuccessCard from './components/SuccessCard';
-import LoginForm from './components/LoginForm';
+import RegisterPage from './components/RegisterPage';
+import LoginPage from './components/LoginPage';
 
-const App = () => {
-  const [role, setRole] = useState(null);
-  const [result, setResult] = useState(null);
-  const [user, setUser] = useState(null);
+const Home = () => (
+  <div className="container">
+    <div className="card">
+      <div className="header">
+        <h1>AtriumMarket</h1>
+      </div>
+      <div className="card-body" style={{ padding: '2rem', textAlign: 'center' }}>
+        <Link to="/login" className="btn btn-full" style={{ marginBottom: '1rem' }}>
+          Войти
+        </Link>
+        <Link to="/register" className="btn btn-full">
+          Зарегистрироваться
+        </Link>
+      </div>
+    </div>
+  </div>
+);
 
-  const handleRestart = () => {
-    setResult(null);
-    setRole(null);
-    setUser(null);
-  };
-
-  if (user) {
-    return <SuccessCard result={result} onRestart={handleRestart} />;
-  }
-
-  if (result) {
-    return <LoginForm onSubmitted={setUser} />;
-  }
-
-  if (!role) {
-    return <RoleModal onSelect={setRole} />;
-  }
-
-  return (
-    <RegistrationForm role={role} onChangeRole={() => setRole(null)} onSubmitted={setResult} />
-  );
-};
+const App = () => (
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </BrowserRouter>
+);
 
 export default App;
