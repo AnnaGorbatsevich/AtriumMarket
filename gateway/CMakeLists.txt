@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.12...3.31)
 project(gateway CXX)
 
-find_package(userver REQUIRED COMPONENTS core)
-
-userver_setup_environment()
+if(NOT TARGET userver::core)
+    find_package(userver REQUIRED COMPONENTS core)
+    userver_setup_environment()
+endif()
 
 include_directories(src)
 

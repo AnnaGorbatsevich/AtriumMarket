@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.12...3.31)
 project(user_service CXX)
 
-find_package(userver REQUIRED COMPONENTS core)
-
-userver_setup_environment()
+# Guarded: see gateway/CMakeLists.txt for why.
+if(NOT TARGET userver::core)
+    find_package(userver REQUIRED COMPONENTS core)
+    userver_setup_environment()
+endif()
 
 include_directories(src)
 
