@@ -1,0 +1,92 @@
+import React, { useState } from 'react';
+import Field from './Field';
+
+const GATEWAY_BASE_URL = process.env.GATEWAY_BASE_URL;
+
+const loginUser = async (payload) => {
+  const response = await fetch(`${GATEWAY_BASE_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(`Error: ${response.status}`);
+  return response.json();
+};
+
+const LoginForm = ({onSubmitted }) => {
+
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const handleChange = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      await loginUser({
+        email: form.email,
+        password: form.password,
+      });
+      onSubmitted({ email: form.email });
+    } catch (err) {
+      setSubmitError('Не удалось отправить данные на сервер. Попробуйте позже.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="container">
+      <div className="card">
+        <div className="header">
+          <h1>Вход </h1>
+        </div>
+        <div className="card-body" style={{ padding: '2rem' }}>
+          <form onSubmit={handleSubmit} noValidate>
+
+
+            <Field label="Email" error={errors.email}>
+              <input
+                type="email"
+                className="form-control"
+                value={form.email}
+                onChange={handleChange('email')}
+                placeholder="name@example.com"
+              />
+            </Field>
+
+
+            <Field label="Пароль" error={errors.password}>
+              <input
+                type="password"
+                className="form-control"
+                value={form.password}
+                onChange={handleChange('password')}
+              />
+            </Field>
+
+
+            {submitError && <div className="field-error submit-error">{submitError}</div>}
+
+            <button type="submit" className="btn btn-full" disabled={submitting}>
+              {submitting ? 'Отправка...' : 'Войти'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;

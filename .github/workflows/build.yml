@@ -36,6 +36,8 @@ jobs:
         with:
           context: ${{ matrix.service }}
           push: true
+          build-args: |
+            GATEWAY_BASE_URL=${{ vars.GATEWAY_BASE_URL }}
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}-${{ matrix.service }}:sha-${{ github.sha }}
             ghcr.io/${{ env.IMAGE_NAME }}-${{ matrix.service }}:latest
