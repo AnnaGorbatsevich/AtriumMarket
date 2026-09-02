@@ -3,7 +3,7 @@ project(user_service CXX)
 
 # Guarded: see gateway/CMakeLists.txt for why.
 if(NOT TARGET userver::core)
-    find_package(userver REQUIRED COMPONENTS core)
+    find_package(userver REQUIRED COMPONENTS core postgresql)
     userver_setup_environment()
 endif()
 
@@ -16,7 +16,7 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/security.hpp
     src/security.cpp
 )
-target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core crypt)
+target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)
 
 # The service
 add_executable(${PROJECT_NAME} src/main.cpp)

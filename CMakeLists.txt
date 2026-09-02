@@ -3,7 +3,7 @@ project(AtriumMarket)
 
 enable_testing()
 
-find_package(userver REQUIRED COMPONENTS core)
+find_package(userver REQUIRED COMPONENTS core postgresql)
 userver_setup_environment()
 
 add_subdirectory(gateway)
