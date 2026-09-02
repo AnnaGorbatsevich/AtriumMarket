@@ -10,7 +10,13 @@ JWT_SECRET = b'test-secret'
 async def test_register(service_client):
     response = await service_client.post(
         '/register',
-        json={'email': 'test@example.com', 'password': 'hunter2'},
+        json={
+            'role': 'buyer',
+            'fullName': 'Test User',
+            'email': 'test@example.com',
+            'phone': '+70000000000',
+            'password': 'hunter2',
+        },
     )
     assert response.status == 200
 
