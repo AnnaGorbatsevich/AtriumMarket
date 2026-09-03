@@ -13,6 +13,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/hello.hpp
     src/handlers/register.hpp
     src/handlers/register.cpp
+    src/handlers/login.hpp
+    src/handlers/login.cpp
     src/security.hpp
     src/security.cpp
 )
