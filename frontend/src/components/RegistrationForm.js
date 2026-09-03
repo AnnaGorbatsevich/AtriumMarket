@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import Field from './Field';
+import { postJson } from '../api';
 
-const GATEWAY_BASE_URL = process.env.GATEWAY_BASE_URL;
-
-const registerUser = async (payload) => {
-  const response = await fetch(`${GATEWAY_BASE_URL}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) throw new Error(`Error: ${response.status}`);
-  return response.json();
-};
+const registerUser = (payload) => postJson('/register', payload);
 
 const RegistrationForm = ({ role, onChangeRole, onSubmitted }) => {
   const isSeller = role === 'seller';
@@ -73,7 +64,7 @@ const RegistrationForm = ({ role, onChangeRole, onSubmitted }) => {
       });
       onSubmitted({ role, email: form.email, name });
     } catch (err) {
-      setSubmitError('Не удалось отправить данные на сервер. Попробуйте позже.');
+      setSubmitError(err.message);
     } finally {
       setSubmitting(false);
     }

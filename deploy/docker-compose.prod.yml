@@ -11,10 +11,15 @@ services:
     image: ghcr.io/${IMAGE_OWNER}/atriummarket-gateway:${IMAGE_TAG}
     ports:
       - "8080:8080"
+    environment:
+      USER_SERVICE_URL: http://user-service:8090
+    depends_on:
+      - user_service
     restart: unless-stopped
 
   user_service:
     image: ghcr.io/${IMAGE_OWNER}/atriummarket-user_service:${IMAGE_TAG}
+    hostname: user-service
     ports:
       - "8090:8090"
     environment:

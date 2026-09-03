@@ -1,15 +1,20 @@
 #include "register_proxy.hpp"
 
-#include <atomic>
+#include <chrono>
 
 #include <fmt/format.h>
 
+#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/error.hpp>
+#include <userver/components/component_context.hpp>
 #include <userver/formats/json.hpp>
 #include <userver/http/content_type.hpp>
-#include <userver/logging/log.hpp>
 #include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_method.hpp>
 #include <userver/server/http/http_response.hpp>
+#include <userver/server/http/http_status.hpp>
+
+#include "../config.hpp"
 
 namespace gateway {
 
@@ -28,21 +33,6 @@ void ValidateRegistrationPayload(const userver::formats::json::Value& payload) {
     }
 }
 
-userver::formats::json::Value MockAuthServiceRegister(const userver::formats::json::Value& payload) {
-    static std::atomic<std::uint64_t> next_id{1};
-
-    const auto role = payload["role"].As<std::string>();
-    const auto email = payload["email"].As<std::string>();
-
-    userver::formats::json::ValueBuilder result;
-    result["status"] = "ok";
-    result["userId"] = fmt::format("stub-{}", next_id++);
-    result["role"] = role;
-    result["email"] = email;
-    return result.ExtractValue();
-}
-
-
 void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Origin"}, std::string{"*"});
     response.SetHeader(std::string{"Access-Control-Allow-Methods"}, std::string{"GET, POST, OPTIONS"});
@@ -50,6 +40,13 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
 }
 
 }  // namespace
+
+RegisterProxyHandler::RegisterProxyHandler(
+    const userver::components::ComponentConfig& config,
+    const userver::components::ComponentContext& context
+)
+    : HttpHandlerBase(config, context),
+      http_client_(context.FindComponent<userver::components::HttpClient>().GetHttpClient()) {}
 
 std::string RegisterProxyHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -73,10 +70,22 @@ std::string RegisterProxyHandler::HandleRequestThrow(
 
     ValidateRegistrationPayload(payload);
 
-    const auto result = MockAuthServiceRegister(payload);
+    try {
+        auto upstream_response = http_client_.CreateRequest()
+                                      .post(UserServiceUrl() + "/register", request.RequestBody())
+                                      .headers({{"Content-Type", "application/json"}})
+                                      .timeout(std::chrono::milliseconds(2000))
+                                      .perform();
 
-    http_response.SetContentType(userver::http::content_type::kApplicationJson);
-    return userver::formats::json::ToString(result);
+        http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
+        http_response.SetContentType(userver::http::content_type::kApplicationJson);
+        return upstream_response->body();
+    } catch (const userver::clients::http::BaseException&) {
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kBadGateway,
+            userver::server::handlers::ExternalBody{"user-service is unavailable"}
+        );
+    }
 }
 
 }  // namespace gateway

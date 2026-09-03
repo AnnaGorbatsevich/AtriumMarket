@@ -26,16 +26,24 @@ components_manager:
             path: /register
             method: POST,OPTIONS
             task_processor: main-task-processor
-        
+
         handler-hello:
             path: /hello
             method: GET,POST,OPTIONS
             task_processor: main-task-processor
-        
+
         handler-login:
             path: /login
             method: POST,OPTIONS
             task_processor: main-task-processor
-        
+
+        http-client-core:
+            fs-task-processor: fs-task-processor
+
+        http-client: {}
+
+        dns-client:
+            fs-task-processor: fs-task-processor
+
 
 config_vars: /app/configs/config_vars.yaml
