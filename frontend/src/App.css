@@ -248,3 +248,92 @@ textarea.form-control {
   color: #64748b;
   margin: 0 0 1.5rem;
 }
+
+/* App shell (topbar + content) */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.topbar-brand {
+  font-weight: 700;
+  font-size: 1.125rem;
+  white-space: nowrap;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.topbar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.topbar-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+.topbar-link:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.topbar-link.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.topbar-logout {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.topbar-logout:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.app-content {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+@media (max-width: 720px) {
+  .topbar-nav {
+    order: 3;
+    width: 100%;
+  }
+}
