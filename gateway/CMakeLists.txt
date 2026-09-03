@@ -9,6 +9,8 @@ endif()
 include_directories(src)
 
 add_library(${PROJECT_NAME}_objs OBJECT
+    src/config.hpp
+    src/config.cpp
     src/handlers/register_proxy.hpp
     src/handlers/register_proxy.cpp
     src/handlers/hello.hpp

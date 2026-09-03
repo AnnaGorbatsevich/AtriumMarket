@@ -1,26 +1,26 @@
 #pragma once
 
-#include <userver/clients/http/client.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
+#include <userver/storages/postgres/cluster.hpp>
 
-namespace gateway {
+namespace user_service {
 
-struct LoginProxyHandler final : public userver::server::handlers::HttpHandlerBase {
+struct LoginHandler final : public userver::server::handlers::HttpHandlerBase {
 public:
     static constexpr std::string_view kName = "handler-login";
 
-    LoginProxyHandler(
+    LoginHandler(
         const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context
     );
 
     std::string HandleRequestThrow(
         const userver::server::http::HttpRequest& request,
-        userver::server::request::RequestContext& context
+        userver::server::request::RequestContext&
     ) const override;
 
 private:
-    userver::clients::http::Client& http_client_;
+    userver::storages::postgres::ClusterPtr pg_cluster_;
 };
 
-}  // namespace gateway
+}  // namespace user_service

@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import Field from './Field';
+import { postJson } from '../api';
 
-const GATEWAY_BASE_URL = process.env.GATEWAY_BASE_URL;
-
-const loginUser = async (payload) => {
-  const response = await fetch(`${GATEWAY_BASE_URL}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) throw new Error(`Error: ${response.status}`);
-  return response.json();
-};
+const loginUser = (payload) => postJson('/login', payload);
 
 const LoginForm = ({onSubmitted }) => {
 
@@ -40,7 +31,7 @@ const LoginForm = ({onSubmitted }) => {
       });
       onSubmitted({ email: form.email });
     } catch (err) {
-      setSubmitError('Не удалось отправить данные на сервер. Попробуйте позже.');
+      setSubmitError(err.message);
     } finally {
       setSubmitting(false);
     }
