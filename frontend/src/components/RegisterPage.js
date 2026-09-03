@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RoleModal from './RoleModal';
 import RegistrationForm from './RegistrationForm';
 import SuccessCard from './SuccessCard';
+import { useAuth } from '../auth';
 
 const RegisterPage = () => {
   const [role, setRole] = useState(null);
   const [result, setResult] = useState(null);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   if (result) {
     return (
       <SuccessCard
         result={result}
-        onRestart={() => {
-          setResult(null);
-          setRole(null);
+        onContinue={async () => {
+          await login(result.token);
+          navigate('/');
         }}
       />
     );

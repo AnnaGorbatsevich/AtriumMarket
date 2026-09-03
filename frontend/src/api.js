@@ -19,3 +19,21 @@ export const postJson = async (path, payload) => {
 
   return response.json();
 };
+
+export const authGet = async (path, token) => {
+  let response;
+  try {
+    response = await fetch(`${GATEWAY_BASE_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('Не удалось отправить данные на сервер. Попробуйте позже.');
+  }
+
+  if (!response.ok) {
+    const message = (await response.text()).trim();
+    throw new Error(message || `Ошибка ${response.status}`);
+  }
+
+  return response.json();
+};

@@ -8,12 +8,14 @@
 #include "handlers/hello.hpp"
 #include "handlers/register.hpp"
 #include "handlers/login.hpp"
+#include "handlers/me.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
                                .Append<user_service::HelloHandler>()
                                .Append<user_service::RegisterHandler>()
                                .Append<user_service::LoginHandler>()
+                               .Append<user_service::MeHandler>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::clients::dns::Component>();

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export const ROLES = {
   buyer: {
@@ -42,6 +43,9 @@ const RoleModal = ({ onSelect }) => (
             </button>
           ))}
         </div>
+        <p className="success-subtext" style={{ textAlign: 'center', marginTop: '1rem' }}>
+              Есть аккаунт? <Link to="/login">Войти</Link>
+            </p>
       </div>
     </div>
   </div>

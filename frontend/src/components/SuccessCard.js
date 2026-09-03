@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SuccessCard = ({ result, onRestart }) => (
+const SuccessCard = ({ result, onContinue }) => (
   <div className="container">
     <div className="card">
       <div className="header">
@@ -13,10 +13,10 @@ const SuccessCard = ({ result, onRestart }) => (
           </svg>
         </div>
         <p className="success-text">
-          Аккаунт {result.role === 'seller' ? 'продавца' : 'покупателя'} «{result.name}» успешно вошли.
+          Аккаунт {result.role === 'seller' ? 'продавца' : 'покупателя'} «{result.name}» успешно создан.
         </p>
         <p className="success-subtext">{result.email}</p>
-        <button className="btn" onClick={onRestart}>Выйти</button>
+        <button className="btn" onClick={onContinue}>На главную</button>
       </div>
     </div>
   </div>

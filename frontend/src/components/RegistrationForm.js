@@ -51,7 +51,7 @@ const RegistrationForm = ({ role, onChangeRole, onSubmitted }) => {
     setSubmitError('');
     setSubmitting(true);
     try {
-      await registerUser({
+      const data = await registerUser({
         role,
         fullName: form.fullName,
         companyName: isSeller ? form.companyName : undefined,
@@ -62,7 +62,7 @@ const RegistrationForm = ({ role, onChangeRole, onSubmitted }) => {
         description: isSeller ? form.description : undefined,
         password: form.password,
       });
-      onSubmitted({ role, email: form.email, name });
+      onSubmitted({ role, email: form.email, name, token: data.token });
     } catch (err) {
       setSubmitError(err.message);
     } finally {
