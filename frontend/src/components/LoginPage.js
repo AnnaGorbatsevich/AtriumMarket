@@ -1,26 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
+import { useAuth } from '../auth';
 
 const LoginPage = () => {
-  const [user, setUser] = useState(null);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  if (user) {
-    return (
-      <div className="container">
-        <div className="card">
-          <div className="header">
-            <h1>Вы вошли</h1>
-          </div>
-          <div className="card-body" style={{ padding: '2rem', textAlign: 'center' }}>
-            <p className="success-subtext">{user.email}</p>
-            <button className="btn" onClick={() => setUser(null)}>Выйти</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleLoggedIn = async (data) => {
+    await login(data.token);
+    navigate('/');
+  };
 
-  return <LoginForm onSubmitted={setUser} />;
+  return <LoginForm onSubmitted={handleLoggedIn} />;
 };
 
 export default LoginPage;

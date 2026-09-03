@@ -9,12 +9,14 @@
 #include "handlers/register_proxy.hpp"
 #include "handlers/hello.hpp"
 #include "handlers/login_proxy.hpp"
+#include "handlers/me_proxy.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
                                .Append<gateway::RegisterProxyHandler>()
                                .Append<gateway::HelloHandler>()
                                .Append<gateway::LoginProxyHandler>()
+                               .Append<gateway::MeProxyHandler>()
                                .Append<userver::components::HttpClientCore>()
                                .Append<userver::clients::http::MiddlewarePipelineComponent>()
                                .Append<userver::components::HttpClient>()

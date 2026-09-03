@@ -37,6 +37,11 @@ components_manager:
             method: POST,OPTIONS
             task_processor: main-task-processor
 
+        handler-me:
+            path: /me
+            method: GET,OPTIONS
+            task_processor: main-task-processor
+
         http-client-core:
             fs-task-processor: fs-task-processor
 

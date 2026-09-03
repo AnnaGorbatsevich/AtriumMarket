@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Field from './Field';
 import { postJson } from '../api';
 
@@ -25,11 +26,11 @@ const LoginForm = ({onSubmitted }) => {
     setSubmitError('');
     setSubmitting(true);
     try {
-      await loginUser({
+      const data = await loginUser({
         email: form.email,
         password: form.password,
       });
-      onSubmitted({ email: form.email });
+      onSubmitted(data);
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -73,6 +74,10 @@ const LoginForm = ({onSubmitted }) => {
             <button type="submit" className="btn btn-full" disabled={submitting}>
               {submitting ? 'Отправка...' : 'Войти'}
             </button>
+
+            <p className="success-subtext" style={{ textAlign: 'center', marginTop: '1rem' }}>
+              Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+            </p>
           </form>
         </div>
       </div>
