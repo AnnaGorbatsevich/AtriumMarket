@@ -35,6 +35,8 @@ const App = () => (
           <Route index element={<Navigate to="/profile" replace />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="cart" element={<Placeholder title="Корзина" />} />
+          <Route path="search" element={<Placeholder title="Поиск Товаров" />} />
+          <Route path="statistics" element={<Placeholder title="Статистика" />} />
           <Route path="favorites" element={<Placeholder title="Избранное" />} />
           <Route path="orders" element={<Placeholder title="Заказы" />} />
           <Route path="products" element={<Placeholder title="Товары" />} />

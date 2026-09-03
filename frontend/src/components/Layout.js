@@ -1,10 +1,11 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { ProfileIcon, CartIcon, HeartIcon, PackageIcon, TagIcon, MessageIcon, BellIcon } from './icons';
+import { ProfileIcon, CartIcon, HeartIcon, PackageIcon, TagIcon, MessageIcon, BellIcon, SearchIcon, StatsIcon} from './icons';
 
 const BUYER_NAV = [
   { to: '/profile', label: 'Профиль', icon: ProfileIcon },
+  { to: '/search', label: 'Поиск товаров', icon: SearchIcon },
   { to: '/cart', label: 'Корзина', icon: CartIcon },
   { to: '/favorites', label: 'Избранное', icon: HeartIcon },
   { to: '/orders', label: 'Мои заказы', icon: PackageIcon },
@@ -16,6 +17,7 @@ const SELLER_NAV = [
   { to: '/profile', label: 'Профиль', icon: ProfileIcon },
   { to: '/products', label: 'Товары', icon: TagIcon },
   { to: '/orders', label: 'Заказы', icon: PackageIcon },
+  { to: '/statistics', label: 'Статистика', icon: StatsIcon },
   { to: '/messages', label: 'Сообщения', icon: MessageIcon },
   { to: '/notifications', label: 'Уведомления', icon: BellIcon },
 ];
