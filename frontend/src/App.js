@@ -3,28 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
+import Layout from './components/Layout';
+import ProfilePage from './components/ProfilePage';
+import Placeholder from './components/Placeholder';
 import { AuthProvider, useAuth } from './auth';
-
-const Home = () => {
-  const { user, logout } = useAuth();
-  return (
-    <div className="container">
-      <div className="card">
-        <div className="header">
-          <h1>AtriumMarket</h1>
-        </div>
-        <div className="card-body" style={{ padding: '2rem', textAlign: 'center' }}>
-          <p className="success-subtext">
-            Вы в аккаунте: {user.fullName} ({user.email})
-          </p>
-          <button type="button" className="btn btn-full" onClick={logout}>
-            Выйти
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const RequireAuth = ({ children }) => {
   const { status, user } = useAuth();
@@ -42,7 +24,25 @@ const App = () => (
   <AuthProvider>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <Layout />
+            </RequireAuth>
+          }
+        >
+          <Route index element={<Navigate to="/profile" replace />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="cart" element={<Placeholder title="Корзина" />} />
+          <Route path="search" element={<Placeholder title="Поиск Товаров" />} />
+          <Route path="statistics" element={<Placeholder title="Статистика" />} />
+          <Route path="favorites" element={<Placeholder title="Избранное" />} />
+          <Route path="orders" element={<Placeholder title="Заказы" />} />
+          <Route path="products" element={<Placeholder title="Товары" />} />
+          <Route path="messages" element={<Placeholder title="Сообщения" />} />
+          <Route path="notifications" element={<Placeholder title="Уведомления" />} />
+        </Route>
         <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
         <Route path="/register" element={<RequireGuest><RegisterPage /></RequireGuest>} />
         <Route path="*" element={<Navigate to="/" replace />} />
