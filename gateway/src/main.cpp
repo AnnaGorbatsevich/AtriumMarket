@@ -13,6 +13,7 @@
 #include "handlers/add_product_proxy.hpp"
 #include "handlers/categories_proxy.hpp"
 #include "handlers/products_proxy.hpp"
+#include "handlers/catalog_proxy.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
@@ -23,6 +24,7 @@ int main(int argc, char* argv[]) {
                                .Append<gateway::AddProductProxyHandler>()
                                .Append<gateway::CategoriesProxyHandler>()
                                .Append<gateway::ProductsProxyHandler>()
+                               .Append<gateway::CatalogProxyHandler>()
                                .Append<userver::components::HttpClientCore>()
                                .Append<userver::clients::http::MiddlewarePipelineComponent>()
                                .Append<userver::components::HttpClient>()

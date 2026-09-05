@@ -6,6 +6,7 @@
 #include <userver/utils/daemon_run.hpp>
 
 #include "handlers/add_product.hpp"
+#include "handlers/catalog.hpp"
 #include "handlers/categories.hpp"
 #include "handlers/hello.hpp"
 #include "handlers/products.hpp"
@@ -16,6 +17,7 @@ int main(int argc, char* argv[]) {
                                .Append<listing_service::AddProductHandler>()
                                .Append<listing_service::CategoriesHandler>()
                                .Append<listing_service::ProductsHandler>()
+                               .Append<listing_service::CatalogHandler>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::clients::dns::Component>();

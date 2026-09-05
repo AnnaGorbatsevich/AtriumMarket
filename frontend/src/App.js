@@ -6,6 +6,7 @@ import LoginPage from './components/LoginPage';
 import Layout from './components/Layout';
 import ProfilePage from './components/ProfilePage';
 import ProductsPage from './components/ProductsPage';
+import CatalogPage from './components/CatalogPage';
 import Placeholder from './components/Placeholder';
 import { AuthProvider, useAuth } from './auth';
 
@@ -36,7 +37,7 @@ const App = () => (
           <Route index element={<Navigate to="/profile" replace />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="cart" element={<Placeholder title="Корзина" />} />
-          <Route path="search" element={<Placeholder title="Поиск Товаров" />} />
+          <Route path="search" element={<CatalogPage />} />
           <Route path="statistics" element={<Placeholder title="Статистика" />} />
           <Route path="favorites" element={<Placeholder title="Избранное" />} />
           <Route path="orders" element={<Placeholder title="Заказы" />} />

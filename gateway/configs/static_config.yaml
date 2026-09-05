@@ -57,6 +57,11 @@ components_manager:
             method: GET,OPTIONS
             task_processor: main-task-processor
 
+        handler-catalog:
+            path: /catalog
+            method: GET,OPTIONS
+            task_processor: main-task-processor
+
         http-client-core:
             fs-task-processor: fs-task-processor
 
