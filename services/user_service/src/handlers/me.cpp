@@ -24,7 +24,7 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
 constexpr std::string_view kBearerPrefix = "Bearer ";
 
 constexpr std::string_view kSelectUserByEmailQuery = R"~(
-SELECT full_name, role::text FROM users WHERE email = $1
+SELECT id, full_name, role::text FROM users WHERE email = $1
 )~";
 
 std::string ExtractBearerToken(const userver::server::http::HttpRequest& request) {
@@ -79,6 +79,7 @@ std::string MeHandler::HandleRequestThrow(
     }
 
     userver::formats::json::ValueBuilder response_body;
+    response_body["id"] = result[0]["id"].As<std::int64_t>();
     response_body["email"] = email;
     response_body["fullName"] = result[0]["full_name"].As<std::string>();
     response_body["role"] = result[0]["role"].As<std::string>();

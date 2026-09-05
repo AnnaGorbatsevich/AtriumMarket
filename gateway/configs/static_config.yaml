@@ -42,6 +42,11 @@ components_manager:
             method: GET,OPTIONS
             task_processor: main-task-processor
 
+        handler-add-product:
+            path: /add_product
+            method: POST,OPTIONS
+            task_processor: main-task-processor
+
         http-client-core:
             fs-task-processor: fs-task-processor
 
