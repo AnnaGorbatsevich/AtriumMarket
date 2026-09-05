@@ -74,7 +74,7 @@ const AddProductForm = ({ onAdded, onCancel }) => {
     setSubmitError('');
     setSubmitting(true);
     try {
-      const data = await addProduct({
+      await addProduct({
         name: form.name,
         description: form.description || undefined,
         categoryId: form.categoryId ? Number(form.categoryId) : undefined,
@@ -88,12 +88,7 @@ const AddProductForm = ({ onAdded, onCancel }) => {
           };
         }),
       });
-      onAdded({
-        productId: data.productId,
-        name: form.name,
-        status: form.status,
-        variantsCount: variants.length,
-      });
+      onAdded();
     } catch (err) {
       setSubmitError(err.message);
     } finally {

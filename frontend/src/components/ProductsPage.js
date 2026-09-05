@@ -1,11 +1,44 @@
-import React, { useState } from 'react';
-import { useAuth } from '../auth';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useAuth, getToken } from '../auth';
+import { authGet } from '../api';
 import AddProductForm from './AddProductForm';
+
+const fetchProducts = () => authGet('/products', getToken());
+
+const pluralizeVariants = (count) => {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'вариация';
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'вариации';
+  return 'вариаций';
+};
+
+const formatOptions = (options) => {
+  if (!options || Object.keys(options).length === 0) return '';
+  return `${Object.entries(options)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ')} — `;
+};
 
 const ProductsPage = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+
+  const loadProducts = useCallback(() => {
+    setLoading(true);
+    setLoadError('');
+    fetchProducts()
+      .then(setProducts)
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (user.role === 'seller') loadProducts();
+  }, [user.role, loadProducts]);
 
   if (user.role !== 'seller') {
     return (
@@ -22,9 +55,9 @@ const ProductsPage = () => {
     );
   }
 
-  const handleAdded = (product) => {
-    setProducts((prev) => [product, ...prev]);
+  const handleAdded = () => {
     setFormOpen(false);
+    loadProducts();
   };
 
   return (
@@ -37,28 +70,49 @@ const ProductsPage = () => {
           </button>
         </div>
         <div className="card-body" style={{ padding: '2rem' }}>
-          {products.length === 0 ? (
+          {loading && (
+            <p className="success-subtext" style={{ textAlign: 'center' }}>
+              Загрузка...
+            </p>
+          )}
+
+          {!loading && loadError && <div className="field-error submit-error">{loadError}</div>}
+
+          {!loading && !loadError && products.length === 0 && (
             <p className="success-subtext" style={{ textAlign: 'center' }}>
               Пока нет товаров. Нажмите «+ Добавить товар», чтобы создать первый.
             </p>
-          ) : (
-            <>
-              <p className="success-subtext">Товары, добавленные в этой сессии:</p>
-              {products.map((product) => (
-                <div className="product-list-item" key={product.productId}>
-                  <div>
-                    <div>{product.name}</div>
-                    <div className="success-subtext" style={{ margin: 0, fontSize: '0.8rem' }}>
-                      Вариаций: {product.variantsCount}
-                    </div>
-                  </div>
-                  <span className={`status-badge ${product.status}`}>
-                    {product.status === 'active' ? 'Активен' : 'Скрыт'}
-                  </span>
-                </div>
-              ))}
-            </>
           )}
+
+          {!loading &&
+            !loadError &&
+            products.map((product) => (
+              <div className="product-list-item" key={product.id} style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{product.name}</div>
+                  {product.description && (
+                    <div className="success-subtext" style={{ margin: '0.25rem 0 0' }}>
+                      {product.description}
+                    </div>
+                  )}
+                  <div className="success-subtext" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
+                    {product.categoryName ? `${product.categoryName} · ` : ''}
+                    {product.variants.length} {pluralizeVariants(product.variants.length)}
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    {product.variants.map((variant) => (
+                      <div key={variant.id} className="success-subtext" style={{ margin: 0, fontSize: '0.8rem' }}>
+                        {formatOptions(variant.options)}
+                        {variant.price} ₽ · остаток {variant.quantity}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <span className={`status-badge ${product.status}`}>
+                  {product.status === 'active' ? 'Активен' : 'Скрыт'}
+                </span>
+              </div>
+            ))}
         </div>
       </div>
 
