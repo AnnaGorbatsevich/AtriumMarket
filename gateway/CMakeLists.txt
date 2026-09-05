@@ -20,6 +20,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/me_proxy.cpp
     src/handlers/add_product_proxy.hpp
     src/handlers/add_product_proxy.cpp
+    src/handlers/categories_proxy.hpp
+    src/handlers/categories_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
 

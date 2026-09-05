@@ -13,6 +13,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/hello.hpp
     src/handlers/add_product.hpp
     src/handlers/add_product.cpp
+    src/handlers/categories.hpp
+    src/handlers/categories.cpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)
 

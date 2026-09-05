@@ -5,6 +5,7 @@ import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
 import Layout from './components/Layout';
 import ProfilePage from './components/ProfilePage';
+import ProductsPage from './components/ProductsPage';
 import Placeholder from './components/Placeholder';
 import { AuthProvider, useAuth } from './auth';
 
@@ -39,7 +40,7 @@ const App = () => (
           <Route path="statistics" element={<Placeholder title="Статистика" />} />
           <Route path="favorites" element={<Placeholder title="Избранное" />} />
           <Route path="orders" element={<Placeholder title="Заказы" />} />
-          <Route path="products" element={<Placeholder title="Товары" />} />
+          <Route path="products" element={<ProductsPage />} />
           <Route path="messages" element={<Placeholder title="Сообщения" />} />
           <Route path="notifications" element={<Placeholder title="Уведомления" />} />
         </Route>

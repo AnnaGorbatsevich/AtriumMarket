@@ -20,7 +20,7 @@ namespace gateway {
 
 namespace {
 
-constexpr std::string_view kRequiredFields[] = {"name", "price", "quantity"};
+constexpr std::string_view kRequiredFields[] = {"name", "variants"};
 
 void ValidateAddProductPayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
@@ -30,6 +30,11 @@ void ValidateAddProductPayload(const userver::formats::json::Value& payload) {
                 userver::server::handlers::ExternalBody{fmt::format("Missing required field: {}", field)}
             );
         }
+    }
+    if (!payload["variants"].IsArray() || payload["variants"].GetSize() == 0) {
+        throw userver::server::handlers::ClientError(
+            userver::server::handlers::ExternalBody{"variants must be a non-empty array"}
+        );
     }
 }
 

@@ -1,11 +1,15 @@
 #include "add_product.hpp"
 
+#include <algorithm>
+#include <array>
+#include <iterator>
 #include <optional>
 #include <string_view>
 
 #include <fmt/format.h>
 
 #include <userver/components/component_context.hpp>
+#include <userver/formats/common/type.hpp>
 #include <userver/formats/json.hpp>
 #include <userver/formats/parse/common_containers.hpp>
 #include <userver/http/content_type.hpp>
@@ -28,7 +32,23 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-constexpr std::string_view kRequiredFields[] = {"sellerId", "name", "price", "quantity"};
+constexpr std::string_view kRequiredFields[] = {"sellerId", "name"};
+constexpr std::string_view kAllowedStatuses[] = {"active", "hidden"};
+
+void ValidateVariant(const userver::formats::json::Value& variant) {
+    const auto& price = variant["price"];
+    const auto& quantity = variant["quantity"];
+    if (price.IsMissing() || price.IsNull() || price.As<int>(-1) < 0) {
+        throw userver::server::handlers::ClientError(
+            userver::server::handlers::ExternalBody{"Each variant needs a non-negative integer price"}
+        );
+    }
+    if (quantity.IsMissing() || quantity.IsNull() || quantity.As<int>(-1) < 0) {
+        throw userver::server::handlers::ClientError(
+            userver::server::handlers::ExternalBody{"Each variant needs a non-negative integer quantity"}
+        );
+    }
+}
 
 void ValidatePayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
@@ -44,15 +64,25 @@ void ValidatePayload(const userver::formats::json::Value& payload) {
             userver::server::handlers::ExternalBody{"Missing required field: name"}
         );
     }
-    if (payload["price"].As<int>(-1) < 0) {
+
+    const auto& variants = payload["variants"];
+    if (!variants.IsArray() || variants.GetSize() == 0) {
         throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"price must be a non-negative integer"}
+            userver::server::handlers::ExternalBody{"variants must be a non-empty array"}
         );
     }
-    if (payload["quantity"].As<int>(-1) < 0) {
-        throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"quantity must be a non-negative integer"}
-        );
+    for (const auto& variant : variants) {
+        ValidateVariant(variant);
+    }
+
+    const auto status = payload["status"].As<std::optional<std::string>>();
+    if (status.has_value()) {
+        const auto* allowed_end = kAllowedStatuses + std::size(kAllowedStatuses);
+        if (std::find(kAllowedStatuses, allowed_end, *status) == allowed_end) {
+            throw userver::server::handlers::ClientError(
+                userver::server::handlers::ExternalBody{"status must be one of: active, hidden"}
+            );
+        }
     }
 }
 
@@ -66,13 +96,14 @@ userver::formats::json::Value ObjectOrEmpty(const userver::formats::json::Value&
 
 constexpr std::string_view kInsertProductQuery = R"~(
 INSERT INTO products (seller_id, name, description, category_id, attributes, status)
-VALUES ($1, $2, $3, $4, $5, 'active')
+VALUES ($1, $2, $3, $4, $5, $6::product_status)
 RETURNING id
 )~";
 
 constexpr std::string_view kInsertVariantQuery = R"~(
 INSERT INTO variants (product_id, price, quantity, options)
 VALUES ($1, $2, $3, $4)
+RETURNING id
 )~";
 
 }  // namespace
@@ -109,11 +140,11 @@ std::string AddProductHandler::HandleRequestThrow(
     const auto description = payload["description"].As<std::optional<std::string>>();
     const auto category_id = payload["categoryId"].As<std::optional<std::int64_t>>();
     const auto attributes = ObjectOrEmpty(payload, "attributes");
-    const auto price = payload["price"].As<int>();
-    const auto quantity = payload["quantity"].As<int>();
-    const auto options = ObjectOrEmpty(payload, "options");
+    const auto status = payload["status"].As<std::string>("active");
+    const auto& variants = payload["variants"];
 
     std::int64_t product_id = 0;
+    userver::formats::json::ValueBuilder variant_ids{userver::formats::common::Type::kArray};
     try {
         auto transaction = pg_cluster_->Begin(
             userver::storages::postgres::ClusterHostType::kMaster,
@@ -126,13 +157,25 @@ std::string AddProductHandler::HandleRequestThrow(
             name,
             description,
             category_id,
-            attributes
+            attributes,
+            status
         );
         product_id = product_result[0]["id"].As<std::int64_t>();
 
-        transaction.Execute(
-            userver::storages::postgres::Query{std::string{kInsertVariantQuery}}, product_id, price, quantity, options
-        );
+        for (const auto& variant : variants) {
+            const auto price = variant["price"].As<int>();
+            const auto quantity = variant["quantity"].As<int>();
+            const auto options = ObjectOrEmpty(variant, "options");
+
+            auto variant_result = transaction.Execute(
+                userver::storages::postgres::Query{std::string{kInsertVariantQuery}},
+                product_id,
+                price,
+                quantity,
+                options
+            );
+            variant_ids.PushBack(variant_result[0]["id"].As<std::int64_t>());
+        }
 
         transaction.Commit();
     } catch (const userver::storages::postgres::IntegrityConstraintViolation&) {
@@ -144,6 +187,7 @@ std::string AddProductHandler::HandleRequestThrow(
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
     response_body["productId"] = product_id;
+    response_body["variantIds"] = variant_ids.ExtractValue();
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(response_body.ExtractValue());

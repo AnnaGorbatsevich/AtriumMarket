@@ -6,12 +6,14 @@
 #include <userver/utils/daemon_run.hpp>
 
 #include "handlers/add_product.hpp"
+#include "handlers/categories.hpp"
 #include "handlers/hello.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
                                .Append<listing_service::HelloHandler>()
                                .Append<listing_service::AddProductHandler>()
+                               .Append<listing_service::CategoriesHandler>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::clients::dns::Component>();

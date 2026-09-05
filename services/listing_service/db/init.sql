@@ -8,6 +8,13 @@ CREATE TABLE categories (
 
 CREATE INDEX idx_categories_parent_id ON categories(parent_id);
 
+INSERT INTO categories (name) VALUES
+    ('Одежда'),
+    ('Обувь'),
+    ('Электроника'),
+    ('Дом и сад'),
+    ('Красота и здоровье');
+
 CREATE TABLE products (
     id            BIGSERIAL PRIMARY KEY,
     seller_id     BIGINT NOT NULL,
