@@ -38,6 +38,10 @@ services:
     hostname: listing-service
     ports:
       - "8070:8070"
+    environment:
+      DB_CONNECTION_STRING: postgresql://listing_service:devpassword@listing-db:5432/atrium_listings
+    depends_on:
+      - listing-db
 
   user-db:
     build:
@@ -51,5 +55,18 @@ services:
     ports:
       - "5432:5432"
 
+  listing-db:
+    build:
+      context: ../services/listing_service/db
+    environment:
+      POSTGRES_USER: listing_service
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: atrium_listings
+    volumes:
+      - listing-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
 volumes:
   user-db-data:
+  listing-db-data:
