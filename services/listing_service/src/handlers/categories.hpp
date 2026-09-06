@@ -2,6 +2,7 @@
 
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/storages/postgres/cluster.hpp>
+#include "db.hpp"
 
 namespace listing_service {
 
@@ -20,7 +21,7 @@ public:
     ) const override;
 
 private:
-    userver::storages::postgres::ClusterPtr pg_cluster_;
+    ListingDAO db_dao_;
 };
 
 }  // namespace listing_service

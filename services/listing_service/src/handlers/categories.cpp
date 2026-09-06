@@ -20,9 +20,6 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-constexpr std::string_view kSelectCategoriesQuery = R"~(
-SELECT id, name, parent_id FROM categories ORDER BY name
-)~";
 
 }  // namespace
 
@@ -31,7 +28,7 @@ CategoriesHandler::CategoriesHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+      db_dao_(context) {}
 
 std::string CategoriesHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -44,10 +41,7 @@ std::string CategoriesHandler::HandleRequestThrow(
         return {};
     }
 
-    auto result = pg_cluster_->Execute(
-        userver::storages::postgres::ClusterHostType::kMaster,
-        userver::storages::postgres::Query{std::string{kSelectCategoriesQuery}}
-    );
+    auto result = db_dao_.GetCategories();
 
     userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
     for (const auto& row : result) {

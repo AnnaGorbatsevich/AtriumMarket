@@ -27,29 +27,6 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-constexpr std::string_view kSelectProductsBySellerQuery = R"~(
-SELECT
-    p.id,
-    p.name,
-    p.description,
-    p.category_id,
-    c.name AS category_name,
-    p.status::text AS status,
-    p.created_at,
-    COALESCE(
-        (SELECT json_agg(
-                    json_build_object('id', v.id, 'price', v.price, 'quantity', v.quantity, 'options', v.options)
-                    ORDER BY v.id
-                )
-         FROM variants v WHERE v.product_id = p.id),
-        '[]'
-    )::jsonb AS variants
-FROM products p
-LEFT JOIN categories c ON c.id = p.category_id
-WHERE p.seller_id = $1 AND p.status != 'deleted'
-ORDER BY p.created_at DESC
-)~";
-
 }  // namespace
 
 ProductsHandler::ProductsHandler(
@@ -57,7 +34,7 @@ ProductsHandler::ProductsHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+      db_dao_(context) {}
 
 std::string ProductsHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -85,11 +62,7 @@ std::string ProductsHandler::HandleRequestThrow(
         );
     }
 
-    auto result = pg_cluster_->Execute(
-        userver::storages::postgres::ClusterHostType::kMaster,
-        userver::storages::postgres::Query{std::string{kSelectProductsBySellerQuery}},
-        seller_id
-    );
+    auto result = db_dao_.GetProducts(seller_id);
 
     userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
     for (const auto& row : result) {
