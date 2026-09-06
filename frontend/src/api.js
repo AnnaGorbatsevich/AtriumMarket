@@ -1,13 +1,9 @@
 const GATEWAY_BASE_URL = process.env.GATEWAY_BASE_URL;
 
-export const postJson = async (path, payload) => {
+const request = async (path, options) => {
   let response;
   try {
-    response = await fetch(`${GATEWAY_BASE_URL}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    response = await fetch(`${GATEWAY_BASE_URL}${path}`, options);
   } catch {
     throw new Error('Не удалось отправить данные на сервер. Попробуйте позже.');
   }
@@ -20,20 +16,23 @@ export const postJson = async (path, payload) => {
   return response.json();
 };
 
-export const authGet = async (path, token) => {
-  let response;
-  try {
-    response = await fetch(`${GATEWAY_BASE_URL}${path}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch {
-    throw new Error('Не удалось отправить данные на сервер. Попробуйте позже.');
-  }
+export const getJson = (path) => request(path, {});
 
-  if (!response.ok) {
-    const message = (await response.text()).trim();
-    throw new Error(message || `Ошибка ${response.status}`);
-  }
+export const postJson = (path, payload) =>
+  request(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-  return response.json();
-};
+export const authGet = (path, token) =>
+  request(path, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+export const authPost = (path, token, payload) =>
+  request(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
