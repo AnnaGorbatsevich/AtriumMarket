@@ -36,11 +36,6 @@ void ValidateLoginPayload(const userver::formats::json::Value& payload) {
     }
 }
 
-
-constexpr std::string_view kSelectUserByEmailQuery = R"~(
-SELECT password_hash FROM users WHERE email = $1
-)~";
-
 }  // namespace
 
 LoginHandler::LoginHandler(
@@ -48,7 +43,7 @@ LoginHandler::LoginHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+      db_dao_(context) {}
 
 std::string LoginHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -75,11 +70,7 @@ std::string LoginHandler::HandleRequestThrow(
     const auto email = payload["email"].As<std::string>();
     const auto password = payload["password"].As<std::string>();
 
-    auto result = pg_cluster_->Execute(
-        userver::storages::postgres::ClusterHostType::kMaster,
-        userver::storages::postgres::Query{std::string{kSelectUserByEmailQuery}},
-        email
-    );
+    auto result = db_dao_.GetMe(email);
 
     if (result.IsEmpty()) {
         throw userver::server::handlers::ClientError(userver::server::handlers::ExternalBody{"Invalid email"}

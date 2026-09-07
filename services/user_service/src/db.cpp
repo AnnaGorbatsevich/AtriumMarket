@@ -15,7 +15,7 @@ UserDAO::UserDAO(const userver::components::ComponentContext& context) :
 userver::v3_2_rc::storages::postgres::ResultSet UserDAO::GetMe(std::string email) const {
 
     std::string_view kSelectProductsBySellerQuery = R"~(
-    SELECT id, full_name, role::text FROM users WHERE email = $1
+    SELECT id, full_name, password_hash, role::text FROM users WHERE email = $1
     )~";
     auto result = pg_cluster_->Execute(
         userver::storages::postgres::ClusterHostType::kMaster,
