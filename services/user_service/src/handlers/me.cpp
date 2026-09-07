@@ -23,10 +23,6 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
 
 constexpr std::string_view kBearerPrefix = "Bearer ";
 
-constexpr std::string_view kSelectUserByEmailQuery = R"~(
-SELECT id, full_name, role::text FROM users WHERE email = $1
-)~";
-
 std::string ExtractBearerToken(const userver::server::http::HttpRequest& request) {
     const auto& auth_header = request.GetHeader("Authorization");
     if (!auth_header.starts_with(kBearerPrefix)) {
@@ -44,7 +40,7 @@ MeHandler::MeHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+      db_dao_(context) {}
 
 std::string MeHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -68,11 +64,7 @@ std::string MeHandler::HandleRequestThrow(
         );
     }
 
-    auto result = pg_cluster_->Execute(
-        userver::storages::postgres::ClusterHostType::kMaster,
-        userver::storages::postgres::Query{std::string{kSelectUserByEmailQuery}},
-        email
-    );
+    auto result = db_dao_.GetMe(email);
 
     if (result.IsEmpty()) {
         throw userver::server::handlers::Unauthorized(userver::server::handlers::ExternalBody{"User not found"});

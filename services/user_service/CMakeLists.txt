@@ -10,6 +10,8 @@ endif()
 include_directories(src)
 
 add_library(${PROJECT_NAME}_objs OBJECT
+    src/db.cpp
+    src/db.cpp
     src/handlers/hello.hpp
     src/handlers/register.hpp
     src/handlers/register.cpp
