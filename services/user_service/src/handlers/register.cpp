@@ -36,17 +36,6 @@ void ValidateRegistrationPayload(const userver::formats::json::Value& payload) {
     }
 }
 
-std::optional<std::string> OptionalField(const userver::formats::json::Value& payload, std::string_view field) {
-    auto value = payload[std::string{field}].As<std::string>({});
-    if (value.empty()) return std::nullopt;
-    return value;
-}
-
-constexpr std::string_view kInsertUserQuery = R"~(
-INSERT INTO users (role, full_name, company_name, email, phone, tax_id, address, description, password_hash)
-VALUES ($1::user_role, $2, $3, $4, $5, $6, $7, $8, $9)
-)~";
-
 }  // namespace
 
 RegisterHandler::RegisterHandler(
@@ -54,7 +43,7 @@ RegisterHandler::RegisterHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+      db_dao_(context) {}
 
 std::string RegisterHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -77,29 +66,10 @@ std::string RegisterHandler::HandleRequestThrow(
     }
 
     ValidateRegistrationPayload(payload);
+    
+    db_dao_.InsertUser(payload);
 
     const auto email = payload["email"].As<std::string>();
-    const auto password_hash = get_password_hash(payload["password"].As<std::string>());
-
-    try {
-        pg_cluster_->Execute(
-            userver::storages::postgres::ClusterHostType::kMaster,
-            userver::storages::postgres::Query{std::string{kInsertUserQuery}},
-            payload["role"].As<std::string>(),
-            payload["fullName"].As<std::string>(),
-            OptionalField(payload, "companyName"),
-            email,
-            payload["phone"].As<std::string>(),
-            OptionalField(payload, "taxId"),
-            OptionalField(payload, "address"),
-            OptionalField(payload, "description"),
-            password_hash
-        );
-    } catch (const userver::storages::postgres::UniqueViolation&) {
-        throw userver::server::handlers::ClientError(userver::server::handlers::ExternalBody{"Email already registered"}
-        );
-    }
-
     const auto jwt_token = create_jwt_token(email);
 
     userver::formats::json::ValueBuilder response_body;
