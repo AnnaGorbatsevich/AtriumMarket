@@ -86,26 +86,6 @@ void ValidatePayload(const userver::formats::json::Value& payload) {
     }
 }
 
-userver::formats::json::Value ObjectOrEmpty(const userver::formats::json::Value& payload, std::string_view field) {
-    const auto& value = payload[std::string{field}];
-    if (value.IsMissing() || value.IsNull()) {
-        return userver::formats::json::MakeObject();
-    }
-    return value;
-}
-
-constexpr std::string_view kInsertProductQuery = R"~(
-INSERT INTO products (seller_id, name, description, category_id, attributes, status)
-VALUES ($1, $2, $3, $4, $5, $6::product_status)
-RETURNING id
-)~";
-
-constexpr std::string_view kInsertVariantQuery = R"~(
-INSERT INTO variants (product_id, price, quantity, options)
-VALUES ($1, $2, $3, $4)
-RETURNING id
-)~";
-
 }  // namespace
 
 AddProductHandler::AddProductHandler(
@@ -113,7 +93,7 @@ AddProductHandler::AddProductHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+      db_dao_(context) {}
 
 std::string AddProductHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -135,59 +115,10 @@ std::string AddProductHandler::HandleRequestThrow(
 
     ValidatePayload(payload);
 
-    const auto seller_id = payload["sellerId"].As<std::int64_t>();
-    const auto name = payload["name"].As<std::string>();
-    const auto description = payload["description"].As<std::optional<std::string>>();
-    const auto category_id = payload["categoryId"].As<std::optional<std::int64_t>>();
-    const auto attributes = ObjectOrEmpty(payload, "attributes");
-    const auto status = payload["status"].As<std::string>("active");
-    const auto& variants = payload["variants"];
-
-    std::int64_t product_id = 0;
-    userver::formats::json::ValueBuilder variant_ids{userver::formats::common::Type::kArray};
-    try {
-        auto transaction = pg_cluster_->Begin(
-            userver::storages::postgres::ClusterHostType::kMaster,
-            userver::storages::postgres::TransactionOptions{}
-        );
-
-        auto product_result = transaction.Execute(
-            userver::storages::postgres::Query{std::string{kInsertProductQuery}},
-            seller_id,
-            name,
-            description,
-            category_id,
-            attributes,
-            status
-        );
-        product_id = product_result[0]["id"].As<std::int64_t>();
-
-        for (const auto& variant : variants) {
-            const auto price = variant["price"].As<int>();
-            const auto quantity = variant["quantity"].As<int>();
-            const auto options = ObjectOrEmpty(variant, "options");
-
-            auto variant_result = transaction.Execute(
-                userver::storages::postgres::Query{std::string{kInsertVariantQuery}},
-                product_id,
-                price,
-                quantity,
-                options
-            );
-            variant_ids.PushBack(variant_result[0]["id"].As<std::int64_t>());
-        }
-
-        transaction.Commit();
-    } catch (const userver::storages::postgres::IntegrityConstraintViolation&) {
-        throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"Invalid categoryId or product data"}
-        );
-    }
+    db_dao_.InsertProduct(payload);
 
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
-    response_body["productId"] = product_id;
-    response_body["variantIds"] = variant_ids.ExtractValue();
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(response_body.ExtractValue());
