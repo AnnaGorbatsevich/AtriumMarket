@@ -17,6 +17,7 @@ public:
         const std::initializer_list<std::pair<userver::utils::zstring_view, userver::utils::zstring_view>>& headers,
         int timeout, std::string request
     ) const;
+    std::shared_ptr<userver::v3_2_rc::clients::http::Response> GetMe(const userver::server::http::HttpRequest& request) const;
 private:
     userver::clients::http::Client& http_client_;
 };

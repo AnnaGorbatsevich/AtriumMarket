@@ -1,4 +1,5 @@
 #include "requests.hpp"
+#include "config.hpp"
 
 #include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_method.hpp>
@@ -35,6 +36,10 @@ namespace gateway {
             .timeout(std::chrono::milliseconds(timeout))
             .perform();
         return response;
+    }
+
+    std::shared_ptr<userver::v3_2_rc::clients::http::Response> HttpRequest::GetMe(const userver::server::http::HttpRequest& request) const {
+        return Get(UserServiceUrl(), "/me", {{"Authorization", request.GetHeader("Authorization")}}, 2000);
     }
 
 } // namespace gateway

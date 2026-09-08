@@ -11,8 +11,6 @@
 #include <userver/server/http/http_response.hpp>
 #include <userver/server/http/http_status.hpp>
 
-#include "../config.hpp"
-
 namespace gateway {
 
 namespace {
@@ -44,7 +42,7 @@ std::string MeProxyHandler::HandleRequestThrow(
     }
 
     try {
-        auto upstream_response = http_requests_.Get(UserServiceUrl(), "/me", {{"Authorization", request.GetHeader("Authorization")}}, 2000);
+        auto upstream_response = http_requests_.GetMe(request);
 
         http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
         http_response.SetContentType(userver::http::content_type::kApplicationJson);

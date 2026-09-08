@@ -31,7 +31,7 @@ ProductsProxyHandler::ProductsProxyHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      http_client_(context.FindComponent<userver::components::HttpClient>().GetHttpClient()) {}
+      http_requests_(context) {}
 
 std::string ProductsProxyHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -46,11 +46,7 @@ std::string ProductsProxyHandler::HandleRequestThrow(
 
     userver::formats::json::Value identity;
     try {
-        auto me_response = http_client_.CreateRequest()
-                                .get(UserServiceUrl() + "/me")
-                                .headers({{"Authorization", request.GetHeader("Authorization")}})
-                                .timeout(std::chrono::milliseconds(2000))
-                                .perform();
+        auto me_response = http_requests_.GetMe(request);
 
         if (me_response->status_code() != 200) {
             http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(me_response->status_code()));
@@ -77,10 +73,7 @@ std::string ProductsProxyHandler::HandleRequestThrow(
 
     try {
         auto upstream_response =
-            http_client_.CreateRequest()
-                .get(ListingServiceUrl() + "/products?sellerId=" + std::to_string(seller_id))
-                .timeout(std::chrono::milliseconds(2000))
-                .perform();
+            http_requests_.Get(ListingServiceUrl(), "/products?sellerId=" + std::to_string(seller_id), {}, 2000);
 
         http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
         http_response.SetContentType(userver::http::content_type::kApplicationJson);

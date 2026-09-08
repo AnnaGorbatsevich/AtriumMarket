@@ -51,7 +51,7 @@ AddProductProxyHandler::AddProductProxyHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      http_client_(context.FindComponent<userver::components::HttpClient>().GetHttpClient()) {}
+      http_requests_(context) {}
 
 std::string AddProductProxyHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -74,11 +74,7 @@ std::string AddProductProxyHandler::HandleRequestThrow(
 
     userver::formats::json::Value identity;
     try {
-        auto me_response = http_client_.CreateRequest()
-                                .get(UserServiceUrl() + "/me")
-                                .headers({{"Authorization", request.GetHeader("Authorization")}})
-                                .timeout(std::chrono::milliseconds(2000))
-                                .perform();
+        auto me_response = http_requests_.GetMe(request);
 
         if (me_response->status_code() != 200) {
             http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(me_response->status_code()));
@@ -105,14 +101,9 @@ std::string AddProductProxyHandler::HandleRequestThrow(
     forwarded_payload["sellerId"] = identity["id"].As<std::int64_t>();
 
     try {
-        auto upstream_response = http_client_.CreateRequest()
-                                      .post(
-                                          ListingServiceUrl() + "/add_product",
-                                          userver::formats::json::ToString(forwarded_payload.ExtractValue())
-                                      )
-                                      .headers({{"Content-Type", "application/json"}})
-                                      .timeout(std::chrono::milliseconds(2000))
-                                      .perform();
+        auto upstream_response = http_requests_.Post(ListingServiceUrl(), "/add_product", 
+            {{"Content-Type", "application/json"}}, 2000,
+            userver::formats::json::ToString(forwarded_payload.ExtractValue()));
 
         http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
         http_response.SetContentType(userver::http::content_type::kApplicationJson);
