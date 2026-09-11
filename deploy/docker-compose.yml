@@ -44,6 +44,14 @@ services:
       DB_CONNECTION_STRING: postgresql://listing_service:devpassword@listing-db:5432/atrium_listings
     depends_on:
       - listing-db
+    
+
+  order_service:
+    build:
+      context: ../services/order_service
+    hostname: order-service
+    ports:
+      - "8060:8060"
 
   user-db:
     build:
