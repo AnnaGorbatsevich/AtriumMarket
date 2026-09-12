@@ -52,6 +52,10 @@ services:
     hostname: order-service
     ports:
       - "8060:8060"
+    environment:
+      DB_CONNECTION_STRING: postgresql://order_service:devpassword@order-db:5432/atrium_order
+    depends_on:
+      - order-db
 
   user-db:
     build:
@@ -76,7 +80,20 @@ services:
       - listing-db-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+  
+  order-db:
+    build:
+      context: ../services/order_service/db
+    environment:
+      POSTGRES_USER: order_service
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: atrium_order
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
 
 volumes:
   user-db-data:
   listing-db-data:
+  order-db-data:

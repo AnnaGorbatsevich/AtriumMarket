@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
                                .Append<order_service::HelloHandler>()
                                .Append<userver::components::TestsuiteSupport>()
+                               .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::clients::dns::Component>();
 
     return userver::utils::DaemonMain(argc, argv, component_list);
