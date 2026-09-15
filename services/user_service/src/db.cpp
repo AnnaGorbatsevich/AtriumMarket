@@ -19,7 +19,7 @@ std::optional<std::string> OptionalField(const userver::formats::json::Value& pa
 UserDAO::UserDAO(const userver::components::ComponentContext& context) : 
             pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
 
-userver::v3_2_rc::storages::postgres::ResultSet UserDAO::GetMe(std::string email) const {
+userver::storages::postgres::ResultSet UserDAO::GetMe(std::string email) const {
 
     std::string_view kSelectProductsBySellerQuery = R"~(
     SELECT id, full_name, password_hash, role::text FROM users WHERE email = $1

@@ -27,4 +27,15 @@ const std::string& ListingServiceUrl() {
     return url;
 }
 
+const std::string& OrderServiceUrl() {
+    static const std::string url = [] {
+        const char* value = std::getenv("ORDER_SERVICE_URL");
+        if (value == nullptr || value[0] == '\0') {
+            throw std::runtime_error("ORDER_SERVICE_URL environment variable is not set");
+        }
+        return std::string{value};
+    }();
+    return url;
+}
+
 }  // namespace gateway

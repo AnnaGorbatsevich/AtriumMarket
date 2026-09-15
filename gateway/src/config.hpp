@@ -8,4 +8,6 @@ const std::string& UserServiceUrl();
 
 const std::string& ListingServiceUrl();
 
+const std::string& OrderServiceUrl();
+
 }  // namespace gateway

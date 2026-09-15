@@ -13,7 +13,7 @@ namespace gateway {
     HttpRequest::HttpRequest(const userver::components::ComponentContext& context) :
         http_client_(context.FindComponent<userver::components::HttpClient>().GetHttpClient()) {}
 
-    std::shared_ptr<userver::v3_2_rc::clients::http::Response> HttpRequest::Get(
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::Get(
         std::string url, std::string handle,
         const std::initializer_list<std::pair<userver::utils::zstring_view, userver::utils::zstring_view>>& headers,
         int timeout) const {
@@ -24,7 +24,7 @@ namespace gateway {
             .perform();
         return response;
     }
-    std::shared_ptr<userver::v3_2_rc::clients::http::Response> HttpRequest::Post(std::string url, std::string handle,
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::Post(std::string url, std::string handle,
         const std::initializer_list<std::pair<userver::utils::zstring_view, userver::utils::zstring_view>>& headers,
         int timeout, std::string request) const {
         auto response = http_client_.CreateRequest()
@@ -38,7 +38,7 @@ namespace gateway {
         return response;
     }
 
-    std::shared_ptr<userver::v3_2_rc::clients::http::Response> HttpRequest::GetMe(const userver::server::http::HttpRequest& request) const {
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::GetMe(const userver::server::http::HttpRequest& request) const {
         return Get(UserServiceUrl(), "/me", {{"Authorization", request.GetHeader("Authorization")}}, 2000);
     }
 

@@ -21,7 +21,7 @@ userver::formats::json::Value ObjectOrEmpty(const userver::formats::json::Value&
 ListingDAO::ListingDAO(const userver::components::ComponentContext& context) : 
             pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
 
-userver::v3_2_rc::storages::postgres::ResultSet ListingDAO::GetProducts(int seller_id) const {
+userver::storages::postgres::ResultSet ListingDAO::GetProducts(int seller_id) const {
 
     std::string_view kSelectProductsBySellerQuery = R"~(
     SELECT
@@ -53,7 +53,7 @@ userver::v3_2_rc::storages::postgres::ResultSet ListingDAO::GetProducts(int sell
     return result;
 }
 
-userver::v3_2_rc::storages::postgres::ResultSet ListingDAO::GetCategories() const {
+userver::storages::postgres::ResultSet ListingDAO::GetCategories() const {
 
     std::string_view kSelectProductsBySellerQuery = R"~(
     SELECT id, name, parent_id FROM categories ORDER BY name
@@ -65,7 +65,7 @@ userver::v3_2_rc::storages::postgres::ResultSet ListingDAO::GetCategories() cons
     return result;
 }
 
-userver::v3_2_rc::storages::postgres::ResultSet ListingDAO::GetCatalog(std::optional<long int> category_id) const {
+userver::storages::postgres::ResultSet ListingDAO::GetCatalog(std::optional<long int> category_id) const {
 
     std::string_view kSelectProductsBySellerQuery = R"~(
         SELECT

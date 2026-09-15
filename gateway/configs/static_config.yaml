@@ -62,6 +62,21 @@ components_manager:
             method: GET,OPTIONS
             task_processor: main-task-processor
 
+        handler-add-basket:
+            path: /add_basket
+            method: POST,OPTIONS
+            task_processor: main-task-processor
+
+        handler-get-basket:
+            path: /get_basket
+            method: GET,OPTIONS
+            task_processor: main-task-processor
+
+        handler-get-orders:
+            path: /get_orders
+            method: GET,OPTIONS
+            task_processor: main-task-processor
+
         http-client-core:
             fs-task-processor: fs-task-processor
 
