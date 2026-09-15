@@ -17,9 +17,11 @@ services:
     environment:
       USER_SERVICE_URL: http://user-service:8090
       LISTING_SERVICE_URL: http://listing-service:8070
+      ORDER_SERVICE_URL: http://order-service:8060
     depends_on:
       - user_service
       - listing_service
+      - order_service
 
   user_service:
     build:
