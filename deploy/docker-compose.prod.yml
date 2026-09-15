@@ -13,8 +13,12 @@ services:
       - "8080:8080"
     environment:
       USER_SERVICE_URL: http://user-service:8090
+      LISTING_SERVICE_URL: http://listing-service:8070
+      ORDER_SERVICE_URL: http://order-service:8060
     depends_on:
       - user_service
+      - listing_service
+      - order_service
     restart: unless-stopped
 
   user_service:
@@ -24,8 +28,31 @@ services:
       - "8090:8090"
     environment:
       JWT_SECRET: ${JWT_SECRET}
+      DB_CONNECTION_STRING: postgresql://user_service:${DB_PASSWORD}@user-db:5432/atrium_users
     depends_on:
       - user-db
+    restart: unless-stopped
+
+  listing_service:
+    image: ghcr.io/${IMAGE_OWNER}/atriummarket-listing_service:${IMAGE_TAG}
+    hostname: listing-service
+    ports:
+      - "8070:8070"
+    environment:
+      DB_CONNECTION_STRING: postgresql://listing_service:${DB_PASSWORD}@listing-db:5432/atrium_listings
+    depends_on:
+      - listing-db
+    restart: unless-stopped
+
+  order_service:
+    image: ghcr.io/${IMAGE_OWNER}/atriummarket-order_service:${IMAGE_TAG}
+    hostname: order-service
+    ports:
+      - "8060:8060"
+    environment:
+      DB_CONNECTION_STRING: postgresql://order_service:${DB_PASSWORD}@order-db:5432/atrium_order
+    depends_on:
+      - order-db
     restart: unless-stopped
 
   user-db:
@@ -38,5 +65,27 @@ services:
       - user-db-data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  listing-db:
+    image: ghcr.io/${IMAGE_OWNER}/atriummarket-listing-db:${IMAGE_TAG}
+    environment:
+      POSTGRES_USER: listing_service
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: atrium_listings
+    volumes:
+      - listing-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  order-db:
+    image: ghcr.io/${IMAGE_OWNER}/atriummarket-order-db:${IMAGE_TAG}
+    environment:
+      POSTGRES_USER: order_service
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: atrium_order
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
 volumes:
   user-db-data:
+  listing-db-data:
+  order-db-data:

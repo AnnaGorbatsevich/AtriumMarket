@@ -21,6 +21,14 @@ jobs:
             context: services/user_service
           - service: user-db
             context: services/user_service/db
+          - service: listing_service
+            context: services/listing_service
+          - service: listing-db
+            context: services/listing_service/db
+          - service: order_service
+            context: services/order_service
+          - service: order-db
+            context: services/order_service/db
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,8 +52,6 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: true
-          build-args: |
-            GATEWAY_BASE_URL=${{ vars.GATEWAY_BASE_URL }}
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}-${{ matrix.service }}:sha-${{ github.sha }}
             ghcr.io/${{ env.IMAGE_NAME }}-${{ matrix.service }}:latest

@@ -1,4 +1,5 @@
-const GATEWAY_BASE_URL = process.env.GATEWAY_BASE_URL;
+// Gateway always runs on port 8080 of the same host that serves the frontend.
+const GATEWAY_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8080`;
 
 const request = async (path, options) => {
   let response;
