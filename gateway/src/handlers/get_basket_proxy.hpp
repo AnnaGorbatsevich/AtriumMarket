@@ -2,6 +2,7 @@
 
 #include <userver/clients/http/client.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
+#include "requests.hpp"
 
 namespace gateway {
 
@@ -20,7 +21,7 @@ public:
     ) const override;
 
 private:
-    userver::clients::http::Client& http_client_;
+    HttpRequest http_requests_;
 };
 
 }  // namespace gateway

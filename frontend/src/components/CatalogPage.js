@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getJson } from '../api';
+import { getJson, authPost } from '../api';
+import { getToken } from '../auth';
 import { pluralizeVariants, formatOptions, minPrice } from '../productDisplay';
+
+const addToCart = (payload) => authPost('/add_basket', getToken(), payload);
 
 const CatalogPage = () => {
   const [categories, setCategories] = useState([]);
@@ -8,6 +11,7 @@ const CatalogPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [cartStatus, setCartStatus] = useState({});
 
   useEffect(() => {
     getJson('/categories')
@@ -28,6 +32,21 @@ const CatalogPage = () => {
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
+
+  const handleAddToCart = async (product, variant) => {
+    setCartStatus((prev) => ({ ...prev, [variant.id]: 'adding' }));
+    try {
+      await addToCart({
+        sellerId: product.sellerId,
+        variantId: variant.id,
+        quantity: 1,
+        price: variant.price,
+      });
+      setCartStatus((prev) => ({ ...prev, [variant.id]: 'added' }));
+    } catch (err) {
+      setCartStatus((prev) => ({ ...prev, [variant.id]: err.message }));
+    }
+  };
 
   return (
     <div className="container">
@@ -78,12 +97,33 @@ const CatalogPage = () => {
                     {product.variants.length} {pluralizeVariants(product.variants.length)}
                   </div>
                   <div style={{ marginTop: '0.5rem' }}>
-                    {product.variants.map((variant) => (
-                      <div key={variant.id} className="success-subtext" style={{ margin: 0, fontSize: '0.8rem' }}>
-                        {formatOptions(variant.options)}
-                        {variant.price} ₽ · в наличии {variant.quantity}
-                      </div>
-                    ))}
+                    {product.variants.map((variant) => {
+                      const status = cartStatus[variant.id];
+                      const isAdding = status === 'adding';
+                      const isAdded = status === 'added';
+                      const isError = status && !isAdding && !isAdded;
+                      return (
+                        <div
+                          key={variant.id}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}
+                        >
+                          <div className="success-subtext" style={{ margin: 0, fontSize: '0.8rem' }}>
+                            {formatOptions(variant.options)}
+                            {variant.price} ₽ · в наличии {variant.quantity}
+                          </div>
+                          <button
+                            type="button"
+                            className="add-variant-btn"
+                            style={{ width: 'auto', margin: 0, padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                            disabled={isAdding || variant.quantity === 0}
+                            onClick={() => handleAddToCart(product, variant)}
+                          >
+                            {isAdding ? 'Добавление...' : isAdded ? 'В корзине ✓' : 'В корзину'}
+                          </button>
+                          {isError && <span className="field-error">{status}</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <span className="price-badge">от {minPrice(product.variants)} ₽</span>

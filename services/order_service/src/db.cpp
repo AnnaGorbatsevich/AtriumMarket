@@ -13,10 +13,12 @@ OrderDAO::OrderDAO(const userver::components::ComponentContext& context) :
             pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
 
 userver::v3_2_rc::storages::postgres::ResultSet OrderDAO::GetOrders(int user_id, bool is_seller) const {
-    std::string kSelectOrdersQuery = R"~(SELECT id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1)~";
+    std::string kSelectOrdersQuery =
+        R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1)~";
 
     if (is_seller) {
-        kSelectOrdersQuery = R"~(SELECT id, variant_id, quantity, price, status FROM orders p WHERE seller_id = $1 AND status <> 'cart')~";
+        kSelectOrdersQuery =
+            R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE seller_id = $1 AND status <> 'cart')~";
     }
     
     auto result = pg_cluster_->Execute(
@@ -29,7 +31,8 @@ userver::v3_2_rc::storages::postgres::ResultSet OrderDAO::GetOrders(int user_id,
 
 userver::v3_2_rc::storages::postgres::ResultSet OrderDAO::GetBasket(int buyer_id) const {
 
-    std::string_view kSelectBasket = R"~(SELECT id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1 AND status = 'cart')~";
+    std::string_view kSelectBasket =
+        R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1 AND status = 'cart')~";
     auto result = pg_cluster_->Execute(
         userver::storages::postgres::ClusterHostType::kMaster,
         userver::storages::postgres::Query{std::string{kSelectBasket}},

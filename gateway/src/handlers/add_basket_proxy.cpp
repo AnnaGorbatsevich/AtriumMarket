@@ -20,7 +20,8 @@ namespace gateway {
 
 namespace {
 
-constexpr std::string_view kRequiredFields[] = {"sellerId", "buyerId", "variadId", "quantity", "price"};
+// buyerId is not accepted here - it always comes from the authenticated caller (see GetMe below).
+constexpr std::string_view kRequiredFields[] = {"sellerId", "variantId", "quantity", "price"};
 
 void ValidateAddBasketPayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
@@ -36,7 +37,7 @@ void ValidateAddBasketPayload(const userver::formats::json::Value& payload) {
 void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Origin"}, std::string{"*"});
     response.SetHeader(std::string{"Access-Control-Allow-Methods"}, std::string{"POST, OPTIONS"});
-    response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
+    response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Authorization, Content-Type"});
 }
 
 }  // namespace
@@ -46,7 +47,7 @@ AddBasketProxyHandler::AddBasketProxyHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      http_client_(context.FindComponent<userver::components::HttpClient>().GetHttpClient()) {}
+      http_requests_(context) {}
 
 std::string AddBasketProxyHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -70,12 +71,35 @@ std::string AddBasketProxyHandler::HandleRequestThrow(
 
     ValidateAddBasketPayload(payload);
 
+    userver::formats::json::Value identity;
     try {
-        auto upstream_response = http_client_.CreateRequest()
-                                      .post(OrderServiceUrl() + "/add_basket", request.RequestBody())
-                                      .headers({{"Content-Type", "application/json"}})
-                                      .timeout(std::chrono::milliseconds(2000))
-                                      .perform();
+        auto me_response = http_requests_.GetMe(request);
+
+        if (me_response->status_code() != 200) {
+            http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(me_response->status_code()));
+            http_response.SetContentType(userver::http::content_type::kApplicationJson);
+            return me_response->body();
+        }
+
+        identity = userver::formats::json::FromString(me_response->body());
+    } catch (const userver::clients::http::BaseException&) {
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kBadGateway,
+            userver::server::handlers::ExternalBody{"user-service is unavailable"}
+        );
+    }
+
+    userver::formats::json::ValueBuilder forwarded_payload{payload};
+    forwarded_payload["buyerId"] = identity["id"].As<std::int64_t>();
+
+    try {
+        auto upstream_response = http_requests_.Post(
+            OrderServiceUrl(),
+            "/add_basket",
+            {{"Content-Type", "application/json"}},
+            2000,
+            userver::formats::json::ToString(forwarded_payload.ExtractValue())
+        );
 
         http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
         http_response.SetContentType(userver::http::content_type::kApplicationJson);

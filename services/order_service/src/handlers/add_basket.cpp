@@ -32,7 +32,7 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-constexpr std::string_view kRequiredFields[] = {"sellerId", "buyerId", "variadId", "quantity", "price"};
+constexpr std::string_view kRequiredFields[] = {"sellerId", "buyerId", "variantId", "quantity", "price"};
 constexpr std::string_view kAllowedStatuses[] = {"cart", "ordered", "accepted", "shipped", "ready_for_pickup", "received", "cancelled"};
 
 void ValidatePayload(const userver::formats::json::Value& payload) {
