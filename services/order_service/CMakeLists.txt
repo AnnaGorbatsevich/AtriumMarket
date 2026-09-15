@@ -10,6 +10,8 @@ endif()
 include_directories(src)
 
 add_library(${PROJECT_NAME}_objs OBJECT
+    src/db.hpp
+    src/db.cpp
     src/handlers/hello.hpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)
