@@ -7,8 +7,8 @@ namespace order_service {
 struct OrderDAO {
 public:
     OrderDAO(const userver::components::ComponentContext& context);
-    userver::v3_2_rc::storages::postgres::ResultSet GetOrders(int user_id, bool is_seller) const;
-    userver::v3_2_rc::storages::postgres::ResultSet GetBasket(int buyer_id) const;
+    userver::storages::postgres::ResultSet GetOrders(int user_id, bool is_seller) const;
+    userver::storages::postgres::ResultSet GetBasket(int buyer_id) const;
     void InsertOrder(userver::formats::json::Value payload) const;
 private:
     userver::storages::postgres::ClusterPtr pg_cluster_;

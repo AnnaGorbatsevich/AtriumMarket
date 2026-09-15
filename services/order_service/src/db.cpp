@@ -12,7 +12,7 @@ namespace order_service {
 OrderDAO::OrderDAO(const userver::components::ComponentContext& context) : 
             pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
 
-userver::v3_2_rc::storages::postgres::ResultSet OrderDAO::GetOrders(int user_id, bool is_seller) const {
+userver::storages::postgres::ResultSet OrderDAO::GetOrders(int user_id, bool is_seller) const {
     std::string kSelectOrdersQuery =
         R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1)~";
 
@@ -29,7 +29,7 @@ userver::v3_2_rc::storages::postgres::ResultSet OrderDAO::GetOrders(int user_id,
     return result;
 }
 
-userver::v3_2_rc::storages::postgres::ResultSet OrderDAO::GetBasket(int buyer_id) const {
+userver::storages::postgres::ResultSet OrderDAO::GetBasket(int buyer_id) const {
 
     std::string_view kSelectBasket =
         R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1 AND status = 'cart')~";
