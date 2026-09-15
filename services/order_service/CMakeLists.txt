@@ -12,6 +12,12 @@ include_directories(src)
 add_library(${PROJECT_NAME}_objs OBJECT
     src/db.hpp
     src/db.cpp
+    src/handlers/add_basket.hpp
+    src/handlers/add_basket.cpp
+    src/handlers/get_basket.hpp
+    src/handlers/get_basket.cpp
+    src/handlers/get_orders.hpp
+    src/handlers/get_orders.cpp
     src/handlers/hello.hpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)
