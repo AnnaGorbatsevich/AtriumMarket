@@ -1,17 +1,19 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getToken } from '../auth';
 import { authGet, authPost, getJson } from '../api';
 import { TrashIcon } from './icons';
+import ProductCard from './ProductCard';
 
 // The gateway identifies the caller via the Authorization token (GetMe) - no id is sent here.
 const fetchBasket = (token) => authGet('/get_basket', token);
 const updateQuantity = (variantId, quantity) => authPost('/update_basket', getToken(), { variantId, quantity });
+const addToCart = (payload) => authPost('/add_basket', getToken(), payload);
 
 const buildVariantIndex = (products) => {
   const index = {};
   products.forEach((product) => {
     product.variants.forEach((variant) => {
-      index[variant.id] = { name: product.name, options: variant.options };
+      index[variant.id] = { name: product.name, options: variant.options, product };
     });
   });
   return index;
@@ -47,6 +49,9 @@ const CartPage = () => {
   const [loadError, setLoadError] = useState('');
   const [busyVariantId, setBusyVariantId] = useState(null);
   const [actionError, setActionError] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [cardStatus, setCardStatus] = useState({});
+  const closeProductCard = useCallback(() => setSelectedProduct(null), []);
 
   const loadBasket = useCallback(() => {
     setLoading(true);
@@ -78,6 +83,38 @@ const CartPage = () => {
       setActionError(err.message);
     } finally {
       setBusyVariantId(null);
+    }
+  };
+
+  const cartCounts = useMemo(() => {
+    const counts = {};
+    items.forEach((item) => {
+      counts[item.variantId] = item.quantity;
+    });
+    return counts;
+  }, [items]);
+
+  const addFromCard = async (product, variant) => {
+    setCardStatus((prev) => ({ ...prev, [variant.id]: 'adding' }));
+    try {
+      await addToCart({
+        sellerId: product.sellerId,
+        variantId: variant.id,
+        quantity: 1,
+        price: variant.price,
+      });
+      setCardStatus((prev) => ({ ...prev, [variant.id]: undefined }));
+      setItems((prev) =>
+        prev.some((entry) => entry.variantId === variant.id)
+          ? prev.map((entry) =>
+              entry.variantId === variant.id
+                ? { ...entry, quantity: entry.quantity + 1, price: variant.price }
+                : entry
+            )
+          : [...prev, { variantId: variant.id, sellerId: product.sellerId, quantity: 1, price: variant.price }]
+      );
+    } catch (err) {
+      setCardStatus((prev) => ({ ...prev, [variant.id]: err.message }));
     }
   };
 
@@ -114,7 +151,11 @@ const CartPage = () => {
               const options = info ? describeOptions(info.options) : '';
               const busy = busyVariantId === item.variantId;
               return (
-                <div className="product-list-item cart-row" key={item.variantId}>
+                <div
+                  className={`product-list-item cart-row${info ? ' clickable' : ''}`}
+                  key={item.variantId}
+                  onClick={info ? () => setSelectedProduct(info.product) : undefined}
+                >
                   <div className="cart-row-info">
                     <div style={{ fontWeight: 600 }}>{info ? info.name : `Товар (вариант #${item.variantId})`}</div>
                     {options && (
@@ -127,7 +168,7 @@ const CartPage = () => {
                     </div>
                   </div>
 
-                  <div className="qty-control">
+                  <div className="qty-control" onClick={(e) => e.stopPropagation()}>
                     {item.quantity > 1 ? (
                       <button
                         type="button"
@@ -185,6 +226,16 @@ const CartPage = () => {
           )}
         </div>
       </div>
+
+      {selectedProduct && (
+        <ProductCard
+          product={selectedProduct}
+          cartCounts={cartCounts}
+          cartStatus={cardStatus}
+          onAddToCart={addFromCard}
+          onClose={closeProductCard}
+        />
+      )}
     </div>
   );
 };
