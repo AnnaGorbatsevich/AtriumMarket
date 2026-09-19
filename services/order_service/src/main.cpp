@@ -9,6 +9,7 @@
 #include "handlers/add_basket.hpp"
 #include "handlers/get_basket.hpp"
 #include "handlers/get_orders.hpp"
+#include "handlers/update_basket.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
@@ -16,6 +17,7 @@ int main(int argc, char* argv[]) {
                                .Append<order_service::AddBasketHandler>()
                                .Append<order_service::GetBasketHandler>()
                                .Append<order_service::GetOrderHandler>()
+                               .Append<order_service::UpdateBasketHandler>()
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::clients::dns::Component>();
