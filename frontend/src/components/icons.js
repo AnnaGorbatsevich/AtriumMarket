@@ -27,17 +27,16 @@ export const CartIcon = () => (
 
 export const StatsIcon = () => (
   <svg {...iconProps}>
-    <circle cx="9" cy="21" r="1" />
-    <circle cx="20" cy="21" r="1" />
-    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
   </svg>
 );
 
 export const SearchIcon = () => (
   <svg {...iconProps}>
-    <circle cx="9" cy="21" r="1" />
-    <circle cx="20" cy="21" r="1" />
-    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
