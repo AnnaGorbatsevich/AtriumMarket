@@ -42,6 +42,15 @@ userver::storages::postgres::ResultSet OrderDAO::GetBasket(int buyer_id) const {
 }
 
 void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
+    std::string kMergeIntoCartQuery = R"~(
+    UPDATE orders SET quantity = quantity + $3, price = $4
+    WHERE id = (
+        SELECT id FROM orders
+        WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+        ORDER BY id LIMIT 1
+    )
+    )~";
+
     std::string kInsertOrderQuery = R"~(
     INSERT INTO orders (buyer_id, seller_id, variant_id, quantity, price)
     VALUES ($1, $2, $3, $4, $5)
@@ -59,18 +68,78 @@ void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
             userver::storages::postgres::TransactionOptions{}
         );
 
-        transaction.Execute(
-            userver::storages::postgres::Query{std::string{kInsertOrderQuery}},
+        const auto merged = transaction.Execute(
+            userver::storages::postgres::Query{std::string{kMergeIntoCartQuery}},
             buyer_id,
-            seller_id,
             variant_id,
             quantity,
             price
         );
+        if (merged.RowsAffected() == 0) {
+            transaction.Execute(
+                userver::storages::postgres::Query{std::string{kInsertOrderQuery}},
+                buyer_id,
+                seller_id,
+                variant_id,
+                quantity,
+                price
+            );
+        }
         transaction.Commit();
     } catch (const userver::storages::postgres::IntegrityConstraintViolation&) {
         throw userver::server::handlers::ClientError(
             userver::server::handlers::ExternalBody{"Invalid order"}
+        );
+    }
+}
+
+bool OrderDAO::SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::int64_t quantity) const {
+    static constexpr std::string_view kDeleteAll = R"~(
+    DELETE FROM orders WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+    )~";
+    static constexpr std::string_view kSetQuantity = R"~(
+    UPDATE orders SET quantity = $3
+    WHERE id = (
+        SELECT id FROM orders
+        WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+        ORDER BY id LIMIT 1
+    )
+    )~";
+    static constexpr std::string_view kDeleteDuplicates = R"~(
+    DELETE FROM orders
+    WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+      AND id > (
+        SELECT MIN(id) FROM orders
+        WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+      )
+    )~";
+
+    try {
+        auto transaction = pg_cluster_->Begin(
+            userver::storages::postgres::ClusterHostType::kMaster,
+            userver::storages::postgres::TransactionOptions{}
+        );
+
+        bool found = false;
+        if (quantity == 0) {
+            found = transaction.Execute(
+                        userver::storages::postgres::Query{std::string{kDeleteAll}}, buyer_id, variant_id
+                    ).RowsAffected() > 0;
+        } else {
+            found = transaction.Execute(
+                        userver::storages::postgres::Query{std::string{kSetQuantity}}, buyer_id, variant_id, quantity
+                    ).RowsAffected() > 0;
+            if (found) {
+                transaction.Execute(
+                    userver::storages::postgres::Query{std::string{kDeleteDuplicates}}, buyer_id, variant_id
+                );
+            }
+        }
+        transaction.Commit();
+        return found;
+    } catch (const userver::storages::postgres::IntegrityConstraintViolation&) {
+        throw userver::server::handlers::ClientError(
+            userver::server::handlers::ExternalBody{"Invalid quantity"}
         );
     }
 }

@@ -17,6 +17,7 @@
 #include "handlers/add_basket_proxy.hpp"
 #include "handlers/get_basket_proxy.hpp"
 #include "handlers/get_orders_proxy.hpp"
+#include "handlers/update_basket_proxy.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
@@ -31,6 +32,7 @@ int main(int argc, char* argv[]) {
                                .Append<gateway::AddBasketProxyHandler>()
                                .Append<gateway::GetBasketProxyHandler>()
                                .Append<gateway::GetOrdersProxyHandler>()
+                               .Append<gateway::UpdateBasketProxyHandler>()
                                .Append<userver::components::HttpClientCore>()
                                .Append<userver::clients::http::MiddlewarePipelineComponent>()
                                .Append<userver::components::HttpClient>()

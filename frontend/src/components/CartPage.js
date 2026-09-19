@@ -1,20 +1,61 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { getToken } from '../auth';
-import { authGet } from '../api';
+import { authGet, authPost, getJson } from '../api';
+import { TrashIcon } from './icons';
 
 // The gateway identifies the caller via the Authorization token (GetMe) - no id is sent here.
 const fetchBasket = (token) => authGet('/get_basket', token);
+const updateQuantity = (variantId, quantity) => authPost('/update_basket', getToken(), { variantId, quantity });
+
+const buildVariantIndex = (products) => {
+  const index = {};
+  products.forEach((product) => {
+    product.variants.forEach((variant) => {
+      index[variant.id] = { name: product.name, options: variant.options };
+    });
+  });
+  return index;
+};
+
+const mergeByVariant = (items) => {
+  const merged = new Map();
+  items.forEach((item) => {
+    const existing = merged.get(item.variantId);
+    if (existing) {
+      existing.quantity += item.quantity;
+      existing.price = item.price;
+    } else {
+      merged.set(item.variantId, { ...item });
+    }
+  });
+  return [...merged.values()];
+};
+
+const describeOptions = (options) =>
+  options
+    ? Object.entries(options)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ')
+    : '';
+
+const formatPrice = (value) => `${value.toLocaleString('ru-RU')} ₽`;
 
 const CartPage = () => {
   const [items, setItems] = useState([]);
+  const [variantIndex, setVariantIndex] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [busyVariantId, setBusyVariantId] = useState(null);
+  const [actionError, setActionError] = useState('');
 
   const loadBasket = useCallback(() => {
     setLoading(true);
     setLoadError('');
-    fetchBasket(getToken())
-      .then(setItems)
+    Promise.all([fetchBasket(getToken()), getJson('/catalog').catch(() => [])])
+      .then(([basket, catalog]) => {
+        setItems(mergeByVariant(basket));
+        setVariantIndex(buildVariantIndex(catalog));
+      })
       .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -23,7 +64,25 @@ const CartPage = () => {
     loadBasket();
   }, [loadBasket]);
 
+  const changeQuantity = async (item, quantity) => {
+    setActionError('');
+    setBusyVariantId(item.variantId);
+    try {
+      await updateQuantity(item.variantId, quantity);
+      setItems((prev) =>
+        quantity === 0
+          ? prev.filter((entry) => entry.variantId !== item.variantId)
+          : prev.map((entry) => (entry.variantId === item.variantId ? { ...entry, quantity } : entry))
+      );
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setBusyVariantId(null);
+    }
+  };
+
   const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="container">
@@ -40,6 +99,8 @@ const CartPage = () => {
 
           {!loading && loadError && <div className="field-error submit-error">{loadError}</div>}
 
+          {!loading && !loadError && actionError && <div className="field-error submit-error">{actionError}</div>}
+
           {!loading && !loadError && items.length === 0 && (
             <p className="success-subtext" style={{ textAlign: 'center' }}>
               Корзина пуста. Добавьте товары на странице поиска.
@@ -48,31 +109,78 @@ const CartPage = () => {
 
           {!loading &&
             !loadError &&
-            items.map((item) => (
-              <div className="product-list-item" key={item.id}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>Вариант #{item.variantId}</div>
-                  <div className="success-subtext" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
-                    {item.quantity} × {item.price} ₽
+            items.map((item) => {
+              const info = variantIndex[item.variantId];
+              const options = info ? describeOptions(info.options) : '';
+              const busy = busyVariantId === item.variantId;
+              return (
+                <div className="product-list-item cart-row" key={item.variantId}>
+                  <div className="cart-row-info">
+                    <div style={{ fontWeight: 600 }}>{info ? info.name : `Товар (вариант #${item.variantId})`}</div>
+                    {options && (
+                      <div className="success-subtext" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
+                        {options}
+                      </div>
+                    )}
+                    <div className="success-subtext" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
+                      {formatPrice(item.price)} за шт.
+                    </div>
                   </div>
+
+                  <div className="qty-control">
+                    {item.quantity > 1 ? (
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        aria-label="Уменьшить количество"
+                        disabled={busy}
+                        onClick={() => changeQuantity(item, item.quantity - 1)}
+                      >
+                        −
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="qty-btn remove"
+                        aria-label="Удалить из корзины"
+                        title="Удалить из корзины"
+                        disabled={busy}
+                        onClick={() => changeQuantity(item, 0)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
+                    <span className="qty-value">{item.quantity}</span>
+                    <button
+                      type="button"
+                      className="qty-btn"
+                      aria-label="Увеличить количество"
+                      disabled={busy}
+                      onClick={() => changeQuantity(item, item.quantity + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="cart-row-total">{formatPrice(item.quantity * item.price)}</div>
                 </div>
-                <span className="price-badge">{item.quantity * item.price} ₽</span>
-              </div>
-            ))}
+              );
+            })}
 
           {!loading && !loadError && items.length > 0 && (
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'baseline',
                 marginTop: '1rem',
                 paddingTop: '1rem',
                 borderTop: '1px solid #e2e8f0',
                 fontWeight: 600,
               }}
             >
-              <span>Итого</span>
-              <span>{total} ₽</span>
+              <span>Итого ({totalCount} шт.)</span>
+              <span style={{ fontSize: '1.15rem' }}>{formatPrice(total)}</span>
             </div>
           )}
         </div>
