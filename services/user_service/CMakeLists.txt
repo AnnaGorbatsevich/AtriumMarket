@@ -19,6 +19,10 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/login.cpp
     src/handlers/me.hpp
     src/handlers/me.cpp
+    src/handlers/update_profile.hpp
+    src/handlers/update_profile.cpp
+    src/profile.hpp
+    src/profile.cpp
     src/security.hpp
     src/security.cpp
 )

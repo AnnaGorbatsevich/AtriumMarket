@@ -36,6 +36,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/get_orders_proxy.cpp
     src/handlers/update_basket_proxy.hpp
     src/handlers/update_basket_proxy.cpp
+    src/handlers/update_profile_proxy.hpp
+    src/handlers/update_profile_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
 

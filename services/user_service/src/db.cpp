@@ -22,7 +22,8 @@ UserDAO::UserDAO(const userver::components::ComponentContext& context) :
 userver::storages::postgres::ResultSet UserDAO::GetMe(std::string email) const {
 
     std::string_view kSelectProductsBySellerQuery = R"~(
-    SELECT id, full_name, password_hash, role::text FROM users WHERE email = $1
+    SELECT id, full_name, password_hash, role::text, phone, company_name, tax_id, address, description
+    FROM users WHERE email = $1
     )~";
     auto result = pg_cluster_->Execute(
         userver::storages::postgres::ClusterHostType::kMaster,
@@ -30,6 +31,35 @@ userver::storages::postgres::ResultSet UserDAO::GetMe(std::string email) const {
         email
     );
     return result;
+}
+
+void UserDAO::UpdateProfile(
+    const std::string& email,
+    const std::string& full_name,
+    const std::string& phone,
+    const std::optional<std::string>& company_name,
+    const std::optional<std::string>& tax_id,
+    const std::optional<std::string>& address,
+    const std::optional<std::string>& description
+) const {
+    static constexpr std::string_view kUpdateProfileQuery = R"~(
+    UPDATE users
+    SET full_name = $2, phone = $3, company_name = $4, tax_id = $5, address = $6, description = $7,
+        updated_at = now()
+    WHERE email = $1
+    )~";
+
+    pg_cluster_->Execute(
+        userver::storages::postgres::ClusterHostType::kMaster,
+        userver::storages::postgres::Query{std::string{kUpdateProfileQuery}},
+        email,
+        full_name,
+        phone,
+        company_name,
+        tax_id,
+        address,
+        description
+    );
 }
 
 void UserDAO::InsertUser(userver::formats::json::Value payload) const {
