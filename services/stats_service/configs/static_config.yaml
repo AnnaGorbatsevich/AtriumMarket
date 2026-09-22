@@ -1,0 +1,49 @@
+components_manager:
+    task_processors:
+        main-task-processor:
+            worker_threads: $worker-threads
+
+        fs-task-processor:
+            worker_threads: $worker-fs-threads
+
+    default_task_processor: main-task-processor
+
+    components:
+        server:
+            listener:
+                port: $server-port
+                task_processor: main-task-processor
+
+        logging:
+            fs-task-processor: fs-task-processor
+            loggers:
+                default:
+                    file_path: '@stderr'
+                    level: $logger-level
+                    overflow_behavior: discard
+
+        handler-hello:
+            path: /hello
+            method: GET,POST,OPTIONS
+            task_processor: main-task-processor
+
+        secdist: {}
+
+        default-secdist-provider:
+            environment-secrets-key: SECDIST_CONFIG
+
+        clickhouse-database:
+            secdist_alias: clickhouse-database
+            initial_pool_size: 2
+            max_pool_size: 5
+            queue_timeout: 1s
+            use_secure_connection: false
+            compression: none
+
+        testsuite-support: {}
+
+        dns-client:
+            fs-task-processor: fs-task-processor
+
+
+config_vars: /app/configs/config_vars.yaml

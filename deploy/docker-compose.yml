@@ -57,6 +57,33 @@ services:
     depends_on:
       - order-db
 
+  stats_service:
+    build:
+      context: ../services/stats_service
+    hostname: stats-service
+    ports:
+      - "8050:8050"
+    environment:
+      SECDIST_CONFIG: '{"clickhouse_settings":{"clickhouse-database":{"hosts":["clickhouse-db"],"port":9000,"user":"default","password":"","dbname":"default"}}}'
+    depends_on:
+      clickhouse-db:
+        condition: service_healthy
+
+  clickhouse-db:
+    image: clickhouse/clickhouse-server:24-alpine
+    environment:
+      CLICKHOUSE_DB: default
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8123/ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - clickhouse-db-data:/var/lib/clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+
   user-db:
     build:
       context: ../services/user_service/db
@@ -97,3 +124,4 @@ volumes:
   user-db-data:
   listing-db-data:
   order-db-data:
+  clickhouse-db-data:
