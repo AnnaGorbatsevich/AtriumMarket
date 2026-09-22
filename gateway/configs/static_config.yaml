@@ -97,6 +97,11 @@ components_manager:
             method: POST,OPTIONS
             task_processor: main-task-processor
 
+        handler-seller-stats:
+            path: /seller_stats
+            method: GET,OPTIONS
+            task_processor: main-task-processor
+
         http-client-core:
             fs-task-processor: fs-task-processor
 

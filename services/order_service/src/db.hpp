@@ -1,7 +1,9 @@
 #pragma once
-#include <userver/storages/postgres/cluster.hpp>
+#include <optional>
 #include <vector>
+#include <userver/storages/postgres/cluster.hpp>
 
+#include "events.hpp"
 
 namespace order_service {
 struct OrderDAO {
@@ -12,10 +14,14 @@ public:
     void InsertOrder(userver::formats::json::Value payload) const;
     bool SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::int64_t quantity) const;
 
-    std::size_t Checkout(std::int64_t buyer_id) const;
+    std::vector<OrderEvent> Checkout(std::int64_t buyer_id) const;
 
     enum class StatusChange { kChanged, kNotFound, kTransitionNotAllowed };
-    StatusChange ChangeOrderStatus(
+    struct StatusChangeResult {
+        StatusChange result;
+        std::optional<OrderEvent> event;
+    };
+    StatusChangeResult ChangeOrderStatus(
         std::int64_t order_id,
         std::int64_t actor_id,
         const std::string& actor_role,
@@ -24,4 +30,4 @@ public:
 private:
     userver::storages::postgres::ClusterPtr pg_cluster_;
 };
-} // namespace order_service 
+} // namespace order_service

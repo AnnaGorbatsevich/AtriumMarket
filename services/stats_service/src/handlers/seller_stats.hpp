@@ -1,17 +1,17 @@
 #pragma once
 
+#include <memory>
+
 #include <userver/server/handlers/http_handler_base.hpp>
-#include <userver/storages/postgres/cluster.hpp>
-#include "db.hpp"
-#include "events.hpp"
+#include <userver/storages/clickhouse/fwd.hpp>
 
-namespace order_service {
+namespace stats_service {
 
-struct CheckoutHandler final : public userver::server::handlers::HttpHandlerBase {
+struct SellerStatsHandler final : public userver::server::handlers::HttpHandlerBase {
 public:
-    static constexpr std::string_view kName = "handler-checkout";
+    static constexpr std::string_view kName = "handler-seller-stats";
 
-    CheckoutHandler(
+    SellerStatsHandler(
         const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context
     );
@@ -22,8 +22,7 @@ public:
     ) const override;
 
 private:
-    OrderDAO db_dao_;
-    OrderEventPublisher event_publisher_;
+    std::shared_ptr<userver::storages::clickhouse::Cluster> clickhouse_;
 };
 
-}  // namespace order_service
+}  // namespace stats_service

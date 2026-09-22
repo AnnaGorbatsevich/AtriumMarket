@@ -9,6 +9,7 @@ import ProductsPage from './components/ProductsPage';
 import CatalogPage from './components/CatalogPage';
 import CartPage from './components/CartPage';
 import OrdersPage from './components/OrdersPage';
+import StatsPage from './components/StatsPage';
 import Placeholder from './components/Placeholder';
 import { AuthProvider, useAuth } from './auth';
 
@@ -40,7 +41,7 @@ const App = () => (
           <Route path="profile" element={<ProfilePage />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="search" element={<CatalogPage />} />
-          <Route path="statistics" element={<Placeholder title="Статистика" />} />
+          <Route path="statistics" element={<StatsPage />} />
           <Route path="favorites" element={<Placeholder title="Избранное" />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="products" element={<ProductsPage />} />

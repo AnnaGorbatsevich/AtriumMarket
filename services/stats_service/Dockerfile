@@ -4,7 +4,7 @@ WORKDIR /app
 COPY . .
 
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DUSERVER_FEATURE_TESTSUITE=OFF \
-    && cmake --build build -j "$(nproc)" --target order_service
+    && cmake --build build -j "$(nproc)" --target stats_service
 
 FROM ubuntu:24.04
 
@@ -22,15 +22,15 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libyaml-cpp0.8 \
     libzstd1 \
     libcrypto++8 \
-    libcrypt1 \
     librdkafka1 \
     liblz4-1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=build /app/build/order_service /app/order_service
+COPY --from=build /lib/libclickhouse-cpp-lib.so /lib/libclickhouse-cpp-lib.so
+COPY --from=build /app/build/stats_service /app/stats_service
 COPY configs /app/configs
 
-EXPOSE 8060
+EXPOSE 8050
 
-CMD ["/app/order_service", "--config", "/app/configs/static_config.yaml"]
+CMD ["/app/stats_service", "--config", "/app/configs/static_config.yaml"]

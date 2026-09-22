@@ -3,6 +3,7 @@
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/storages/postgres/cluster.hpp>
 #include "db.hpp"
+#include "events.hpp"
 
 namespace order_service {
 
@@ -22,6 +23,7 @@ public:
 
 private:
     OrderDAO db_dao_;
+    OrderEventPublisher event_publisher_;
 };
 
 }  // namespace order_service

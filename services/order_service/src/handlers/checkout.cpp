@@ -24,7 +24,8 @@ CheckoutHandler::CheckoutHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      db_dao_(context) {}
+      db_dao_(context),
+      event_publisher_(context) {}
 
 std::string CheckoutHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -51,14 +52,17 @@ std::string CheckoutHandler::HandleRequestThrow(
         );
     }
 
-    const auto ordered = db_dao_.Checkout(buyer_id.As<std::int64_t>());
-    if (ordered == 0) {
+    const auto events = db_dao_.Checkout(buyer_id.As<std::int64_t>());
+    if (events.empty()) {
         throw userver::server::handlers::ClientError(userver::server::handlers::ExternalBody{"Cart is empty"});
+    }
+    for (const auto& event : events) {
+        event_publisher_.Publish(event);
     }
 
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
-    response_body["orders"] = static_cast<std::int64_t>(ordered);
+    response_body["orders"] = static_cast<std::int64_t>(events.size());
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(response_body.ExtractValue());

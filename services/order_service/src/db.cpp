@@ -145,28 +145,42 @@ bool OrderDAO::SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, s
     }
 }
 
-std::size_t OrderDAO::Checkout(std::int64_t buyer_id) const {
+std::vector<OrderEvent> OrderDAO::Checkout(std::int64_t buyer_id) const {
     static constexpr std::string_view kCheckoutQuery = R"~(
     UPDATE orders SET status = 'ordered' WHERE buyer_id = $1 AND status = 'cart'
+    RETURNING id, seller_id, variant_id, quantity, price
     )~";
 
-    return pg_cluster_
-        ->Execute(
-            userver::storages::postgres::ClusterHostType::kMaster,
-            userver::storages::postgres::Query{std::string{kCheckoutQuery}},
-            buyer_id
-        )
-        .RowsAffected();
+    const auto result = pg_cluster_->Execute(
+        userver::storages::postgres::ClusterHostType::kMaster,
+        userver::storages::postgres::Query{std::string{kCheckoutQuery}},
+        buyer_id
+    );
+
+    std::vector<OrderEvent> events;
+    events.reserve(result.Size());
+    for (const auto& row : result) {
+        events.push_back(OrderEvent{
+            row["id"].As<std::int64_t>(),
+            buyer_id,
+            row["seller_id"].As<std::int64_t>(),
+            row["variant_id"].As<std::int64_t>(),
+            row["quantity"].As<std::int64_t>(),
+            row["price"].As<std::int64_t>(),
+            "ordered",
+        });
+    }
+    return events;
 }
 
-OrderDAO::StatusChange OrderDAO::ChangeOrderStatus(
+OrderDAO::StatusChangeResult OrderDAO::ChangeOrderStatus(
     std::int64_t order_id,
     std::int64_t actor_id,
     const std::string& actor_role,
     const std::string& new_status
 ) const {
     static constexpr std::string_view kSelectForUpdate = R"~(
-    SELECT buyer_id, seller_id, status FROM orders WHERE id = $1 FOR UPDATE
+    SELECT buyer_id, seller_id, variant_id, quantity, price, status FROM orders WHERE id = $1 FOR UPDATE
     )~";
     static constexpr std::string_view kUpdateStatus = R"~(
     UPDATE orders SET status = $2 WHERE id = $1
@@ -180,19 +194,34 @@ OrderDAO::StatusChange OrderDAO::ChangeOrderStatus(
     const auto result = transaction.Execute(
         userver::storages::postgres::Query{std::string{kSelectForUpdate}}, order_id
     );
-    if (result.IsEmpty()) return StatusChange::kNotFound;
+    if (result.IsEmpty()) return {StatusChange::kNotFound, std::nullopt};
 
     const auto row = result[0];
-    const auto owner_id = actor_role == "seller" ? row["seller_id"].As<std::int64_t>()
-                                                 : row["buyer_id"].As<std::int64_t>();
+    const auto buyer_id = row["buyer_id"].As<std::int64_t>();
+    const auto seller_id = row["seller_id"].As<std::int64_t>();
+    const auto owner_id = actor_role == "seller" ? seller_id : buyer_id;
     const auto current_status = row["status"].As<std::string>();
 
-    if (owner_id != actor_id || current_status == "cart") return StatusChange::kNotFound;
-    if (!IsTransitionAllowed(actor_role, current_status, new_status)) return StatusChange::kTransitionNotAllowed;
+    if (owner_id != actor_id || current_status == "cart") return {StatusChange::kNotFound, std::nullopt};
+    if (!IsTransitionAllowed(actor_role, current_status, new_status)) {
+        return {StatusChange::kTransitionNotAllowed, std::nullopt};
+    }
 
     transaction.Execute(userver::storages::postgres::Query{std::string{kUpdateStatus}}, order_id, new_status);
     transaction.Commit();
-    return StatusChange::kChanged;
+
+    return {
+        StatusChange::kChanged,
+        OrderEvent{
+            order_id,
+            buyer_id,
+            seller_id,
+            row["variant_id"].As<std::int64_t>(),
+            row["quantity"].As<std::int64_t>(),
+            row["price"].As<std::int64_t>(),
+            new_status,
+        },
+    };
 }
 
 } // namespace order_service

@@ -50,7 +50,8 @@ UpdateOrderStatusHandler::UpdateOrderStatusHandler(
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      db_dao_(context) {}
+      db_dao_(context),
+      event_publisher_(context) {}
 
 std::string UpdateOrderStatusHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
@@ -79,7 +80,7 @@ std::string UpdateOrderStatusHandler::HandleRequestThrow(
         payload["status"].As<std::string>()
     );
 
-    switch (change) {
+    switch (change.result) {
         case OrderDAO::StatusChange::kNotFound:
             throw userver::server::handlers::CustomHandlerException(
                 userver::server::handlers::HandlerErrorCode::kResourceNotFound,
@@ -90,6 +91,7 @@ std::string UpdateOrderStatusHandler::HandleRequestThrow(
                 userver::server::handlers::ExternalBody{"This status change is not allowed"}
             );
         case OrderDAO::StatusChange::kChanged:
+            event_publisher_.Publish(*change.event);
             break;
     }
 
