@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libzstd1 \
     libcrypto++8 \
     libcrypt1 \
+    librdkafka1 \
+    liblz4-1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -3,7 +3,7 @@ project(stats_service CXX)
 
 # Guarded: see gateway/CMakeLists.txt for why.
 if(NOT TARGET userver::core)
-    find_package(userver REQUIRED COMPONENTS core clickhouse)
+    find_package(userver REQUIRED COMPONENTS core clickhouse kafka)
     userver_setup_environment()
 endif()
 
@@ -11,8 +11,10 @@ include_directories(src)
 
 add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/hello.hpp
+    src/order_event_consumer.hpp
+    src/order_event_consumer.cpp
 )
-target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::clickhouse)
+target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::clickhouse userver::kafka)
 
 # The service
 add_executable(${PROJECT_NAME} src/main.cpp)

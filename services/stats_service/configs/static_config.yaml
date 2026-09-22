@@ -40,6 +40,20 @@ components_manager:
             use_secure_connection: false
             compression: none
 
+        kafka-consumer:
+            group_id: stats-service
+            topics:
+              - order-events
+            auto_offset_reset: earliest
+            max_batch_size: 100
+            poll_timeout: 500ms
+            security_protocol: PLAINTEXT
+            consumer-task-processor: main-task-processor
+            consumer-blocking-task-processor: fs-task-processor
+            task-processor: main-task-processor
+
+        order-event-consumer: {}
+
         testsuite-support: {}
 
         dns-client:

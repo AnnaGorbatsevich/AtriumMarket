@@ -3,7 +3,7 @@ project(AtriumMarket)
 
 enable_testing()
 
-find_package(userver REQUIRED COMPONENTS core postgresql clickhouse)
+find_package(userver REQUIRED COMPONENTS core postgresql clickhouse kafka)
 userver_setup_environment()
 
 add_subdirectory(gateway)
