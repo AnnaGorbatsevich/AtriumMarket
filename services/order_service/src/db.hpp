@@ -12,7 +12,7 @@ public:
     userver::storages::postgres::ResultSet GetOrders(int user_id, bool is_seller) const;
     userver::storages::postgres::ResultSet GetBasket(int buyer_id) const;
     void InsertOrder(userver::formats::json::Value payload) const;
-    bool SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::int64_t quantity) const;
+    bool UpdateCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::string action) const;
 
     std::vector<OrderEvent> Checkout(std::int64_t buyer_id) const;
 

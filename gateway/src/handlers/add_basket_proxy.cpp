@@ -20,7 +20,7 @@ namespace gateway {
 
 namespace {
 
-constexpr std::string_view kRequiredFields[] = {"variantId", "quantity"};
+constexpr std::string_view kRequiredFields[] = {"variantId"};
 
 void ValidateAddBasketPayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {

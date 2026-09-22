@@ -7,7 +7,7 @@ import ProductCard from './ProductCard';
 
 // The gateway identifies the caller via the Authorization token (GetMe) - no id is sent here.
 const fetchBasket = (token) => authGet('/get_basket', token);
-const updateQuantity = (variantId, quantity) => authPost('/update_basket', getToken(), { variantId, quantity });
+const updateQuantity = (variantId, action) => authPost('/update_basket', getToken(), { variantId, action });
 const addToCart = (payload) => authPost('/add_basket', getToken(), payload);
 const placeOrder = () => authPost('/checkout', getToken(), {});
 
@@ -73,16 +73,22 @@ const CartPage = () => {
     loadBasket();
   }, [loadBasket]);
 
-  const changeQuantity = async (item, quantity) => {
+  // action is 'increase' or 'decrease' - the server only ever steps the cart by one unit at a
+  // time (see order_service::OrderDAO::UpdateCartQuantity), so there's no absolute quantity to send.
+  const changeQuantity = async (item, action) => {
     setActionError('');
     setBusyVariantId(item.variantId);
     try {
-      await updateQuantity(item.variantId, quantity);
-      setItems((prev) =>
-        quantity === 0
-          ? prev.filter((entry) => entry.variantId !== item.variantId)
-          : prev.map((entry) => (entry.variantId === item.variantId ? { ...entry, quantity } : entry))
-      );
+      await updateQuantity(item.variantId, action);
+      setItems((prev) => {
+        if (action === 'decrease' && item.quantity <= 1) {
+          return prev.filter((entry) => entry.variantId !== item.variantId);
+        }
+        const delta = action === 'increase' ? 1 : -1;
+        return prev.map((entry) =>
+          entry.variantId === item.variantId ? { ...entry, quantity: entry.quantity + delta } : entry
+        );
+      });
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -104,7 +110,6 @@ const CartPage = () => {
       await addToCart({
         sellerId: product.sellerId,
         variantId: variant.id,
-        quantity: 1,
         price: variant.price,
       });
       setCardStatus((prev) => ({ ...prev, [variant.id]: undefined }));
@@ -191,7 +196,7 @@ const CartPage = () => {
                         className="qty-btn"
                         aria-label="Уменьшить количество"
                         disabled={busy}
-                        onClick={() => changeQuantity(item, item.quantity - 1)}
+                        onClick={() => changeQuantity(item, 'decrease')}
                       >
                         −
                       </button>
@@ -202,7 +207,7 @@ const CartPage = () => {
                         aria-label="Удалить из корзины"
                         title="Удалить из корзины"
                         disabled={busy}
-                        onClick={() => changeQuantity(item, 0)}
+                        onClick={() => changeQuantity(item, 'decrease')}
                       >
                         <TrashIcon />
                       </button>
@@ -213,7 +218,7 @@ const CartPage = () => {
                       className="qty-btn"
                       aria-label="Увеличить количество"
                       disabled={busy}
-                      onClick={() => changeQuantity(item, item.quantity + 1)}
+                      onClick={() => changeQuantity(item, 'increase')}
                     >
                       +
                     </button>

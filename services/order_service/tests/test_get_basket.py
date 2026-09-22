@@ -6,7 +6,7 @@ async def test_get_basket_requires_seller_id(service_client):
 async def test_get_basket_returns_added_item(service_client):
     add_response = await service_client.post(
         '/add_basket',
-        json={'sellerId': 10, 'buyerId': 20, 'variantId': 30, 'quantity': 1, 'price': 200},
+        json={'sellerId': 10, 'buyerId': 20, 'variantId': 30, 'price': 200},
     )
     assert add_response.status == 200
 

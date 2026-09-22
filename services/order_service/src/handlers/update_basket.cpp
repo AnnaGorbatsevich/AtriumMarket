@@ -19,7 +19,9 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-constexpr std::string_view kRequiredFields[] = {"buyerId", "variantId", "quantity"};
+constexpr std::string_view kRequiredFields[] = {"buyerId", "variantId", "action"};
+constexpr std::string_view kIncrease = "increase";
+constexpr std::string_view kDecrease = "decrease";
 
 void ValidatePayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
@@ -30,9 +32,10 @@ void ValidatePayload(const userver::formats::json::Value& payload) {
             );
         }
     }
-    if (payload["quantity"].As<std::int64_t>(-1) < 0) {
+    const auto action = payload["action"].As<std::string>();
+    if (action != kIncrease && action != kDecrease) {
         throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"quantity must be a non-negative integer"}
+            userver::server::handlers::ExternalBody{"action must be increase or decrease"}
         );
     }
 }
@@ -66,10 +69,11 @@ std::string UpdateBasketHandler::HandleRequestThrow(
 
     ValidatePayload(payload);
 
-    const bool found = db_dao_.SetCartQuantity(
+    const auto action = payload["action"].As<std::string>();
+    const bool found = db_dao_.UpdateCartQuantity(
         payload["buyerId"].As<std::int64_t>(),
         payload["variantId"].As<std::int64_t>(),
-        payload["quantity"].As<std::int64_t>()
+        action
     );
     if (!found) {
         throw userver::server::handlers::CustomHandlerException(

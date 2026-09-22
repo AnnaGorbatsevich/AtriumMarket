@@ -44,7 +44,7 @@ userver::storages::postgres::ResultSet OrderDAO::GetBasket(int buyer_id) const {
 
 void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
     std::string kMergeIntoCartQuery = R"~(
-    UPDATE orders SET quantity = quantity + $3, price = $4
+    UPDATE orders SET quantity = quantity + 1, price = $3
     WHERE id = (
         SELECT id FROM orders
         WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
@@ -54,13 +54,12 @@ void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
 
     std::string kInsertOrderQuery = R"~(
     INSERT INTO orders (buyer_id, seller_id, variant_id, quantity, price)
-    VALUES ($1, $2, $3, $4, $5)
+    VALUES ($1, $2, $3, 1, $4)
     )~";
 
     const auto buyer_id = payload["buyerId"].As<std::int64_t>();
     const auto seller_id = payload["sellerId"].As<std::int64_t>();
     const auto variant_id = payload["variantId"].As<std::int64_t>();
-    const auto quantity = payload["quantity"].As<std::int64_t>();
     const auto price = payload["price"].As<std::int64_t>();
 
     try {
@@ -73,7 +72,6 @@ void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
             userver::storages::postgres::Query{std::string{kMergeIntoCartQuery}},
             buyer_id,
             variant_id,
-            quantity,
             price
         );
         if (merged.RowsAffected() == 0) {
@@ -82,7 +80,6 @@ void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
                 buyer_id,
                 seller_id,
                 variant_id,
-                quantity,
                 price
             );
         }
@@ -94,25 +91,30 @@ void OrderDAO::InsertOrder(userver::formats::json::Value payload) const {
     }
 }
 
-bool OrderDAO::SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::int64_t quantity) const {
-    static constexpr std::string_view kDeleteAll = R"~(
-    DELETE FROM orders WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
-    )~";
-    static constexpr std::string_view kSetQuantity = R"~(
-    UPDATE orders SET quantity = $3
+bool OrderDAO::UpdateCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::string action) const {
+    static constexpr std::string_view kIncreaseQuery = R"~(
+    UPDATE orders SET quantity = quantity + 1
     WHERE id = (
         SELECT id FROM orders
         WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
         ORDER BY id LIMIT 1
     )
     )~";
-    static constexpr std::string_view kDeleteDuplicates = R"~(
-    DELETE FROM orders
-    WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
-      AND id > (
-        SELECT MIN(id) FROM orders
+    static constexpr std::string_view kDecreaseQuery = R"~(
+    UPDATE orders SET quantity = quantity - 1
+    WHERE id = (
+        SELECT id FROM orders
         WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
-      )
+        ORDER BY id LIMIT 1
+    ) AND quantity > 1
+    )~";
+    static constexpr std::string_view kRemoveQuery = R"~(
+    DELETE FROM orders
+    WHERE id = (
+        SELECT id FROM orders
+        WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+        ORDER BY id LIMIT 1
+    ) AND quantity <= 1
     )~";
 
     try {
@@ -122,25 +124,25 @@ bool OrderDAO::SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, s
         );
 
         bool found = false;
-        if (quantity == 0) {
+        if (action == "increase") {
             found = transaction.Execute(
-                        userver::storages::postgres::Query{std::string{kDeleteAll}}, buyer_id, variant_id
+                        userver::storages::postgres::Query{std::string{kIncreaseQuery}}, buyer_id, variant_id
                     ).RowsAffected() > 0;
         } else {
             found = transaction.Execute(
-                        userver::storages::postgres::Query{std::string{kSetQuantity}}, buyer_id, variant_id, quantity
+                        userver::storages::postgres::Query{std::string{kDecreaseQuery}}, buyer_id, variant_id
                     ).RowsAffected() > 0;
-            if (found) {
-                transaction.Execute(
-                    userver::storages::postgres::Query{std::string{kDeleteDuplicates}}, buyer_id, variant_id
-                );
+            if (found == 0) {
+                found = transaction.Execute(
+                            userver::storages::postgres::Query{std::string{kRemoveQuery}}, buyer_id, variant_id
+                        ).RowsAffected() > 0;
             }
         }
         transaction.Commit();
         return found;
     } catch (const userver::storages::postgres::IntegrityConstraintViolation&) {
         throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"Invalid quantity"}
+            userver::server::handlers::ExternalBody{"Invalid cart update"}
         );
     }
 }

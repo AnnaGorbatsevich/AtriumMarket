@@ -20,8 +20,7 @@ namespace gateway {
 
 namespace {
 
-// buyerId is not accepted here - it always comes from the authenticated caller (see GetMe below).
-constexpr std::string_view kRequiredFields[] = {"variantId", "quantity"};
+constexpr std::string_view kRequiredFields[] = {"variantId", "action"};
 
 void ValidateUpdateBasketPayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
