@@ -6,6 +6,7 @@
 #include <userver/storages/postgres/io/optional.hpp>
 #include <userver/server/handlers/exceptions.hpp>
 #include "db.hpp"
+#include "order_status.hpp"
 
 namespace order_service {
 
@@ -14,11 +15,11 @@ OrderDAO::OrderDAO(const userver::components::ComponentContext& context) :
 
 userver::storages::postgres::ResultSet OrderDAO::GetOrders(int user_id, bool is_seller) const {
     std::string kSelectOrdersQuery =
-        R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1)~";
+        R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE buyer_id = $1 AND status <> 'cart' ORDER BY id DESC)~";
 
     if (is_seller) {
         kSelectOrdersQuery =
-            R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE seller_id = $1 AND status <> 'cart')~";
+            R"~(SELECT id, buyer_id, seller_id, variant_id, quantity, price, status FROM orders p WHERE seller_id = $1 AND status <> 'cart' ORDER BY id DESC)~";
     }
     
     auto result = pg_cluster_->Execute(
@@ -142,6 +143,56 @@ bool OrderDAO::SetCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, s
             userver::server::handlers::ExternalBody{"Invalid quantity"}
         );
     }
+}
+
+std::size_t OrderDAO::Checkout(std::int64_t buyer_id) const {
+    static constexpr std::string_view kCheckoutQuery = R"~(
+    UPDATE orders SET status = 'ordered' WHERE buyer_id = $1 AND status = 'cart'
+    )~";
+
+    return pg_cluster_
+        ->Execute(
+            userver::storages::postgres::ClusterHostType::kMaster,
+            userver::storages::postgres::Query{std::string{kCheckoutQuery}},
+            buyer_id
+        )
+        .RowsAffected();
+}
+
+OrderDAO::StatusChange OrderDAO::ChangeOrderStatus(
+    std::int64_t order_id,
+    std::int64_t actor_id,
+    const std::string& actor_role,
+    const std::string& new_status
+) const {
+    static constexpr std::string_view kSelectForUpdate = R"~(
+    SELECT buyer_id, seller_id, status FROM orders WHERE id = $1 FOR UPDATE
+    )~";
+    static constexpr std::string_view kUpdateStatus = R"~(
+    UPDATE orders SET status = $2 WHERE id = $1
+    )~";
+
+    auto transaction = pg_cluster_->Begin(
+        userver::storages::postgres::ClusterHostType::kMaster,
+        userver::storages::postgres::TransactionOptions{}
+    );
+
+    const auto result = transaction.Execute(
+        userver::storages::postgres::Query{std::string{kSelectForUpdate}}, order_id
+    );
+    if (result.IsEmpty()) return StatusChange::kNotFound;
+
+    const auto row = result[0];
+    const auto owner_id = actor_role == "seller" ? row["seller_id"].As<std::int64_t>()
+                                                 : row["buyer_id"].As<std::int64_t>();
+    const auto current_status = row["status"].As<std::string>();
+
+    if (owner_id != actor_id || current_status == "cart") return StatusChange::kNotFound;
+    if (!IsTransitionAllowed(actor_role, current_status, new_status)) return StatusChange::kTransitionNotAllowed;
+
+    transaction.Execute(userver::storages::postgres::Query{std::string{kUpdateStatus}}, order_id, new_status);
+    transaction.Commit();
+    return StatusChange::kChanged;
 }
 
 } // namespace order_service

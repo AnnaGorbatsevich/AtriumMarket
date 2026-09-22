@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getToken } from '../auth';
 import { authGet, authPost, getJson } from '../api';
 import { TrashIcon } from './icons';
@@ -8,6 +9,7 @@ import ProductCard from './ProductCard';
 const fetchBasket = (token) => authGet('/get_basket', token);
 const updateQuantity = (variantId, quantity) => authPost('/update_basket', getToken(), { variantId, quantity });
 const addToCart = (payload) => authPost('/add_basket', getToken(), payload);
+const placeOrder = () => authPost('/checkout', getToken(), {});
 
 const buildVariantIndex = (products) => {
   const index = {};
@@ -51,6 +53,8 @@ const CartPage = () => {
   const [actionError, setActionError] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cardStatus, setCardStatus] = useState({});
+  const [checkingOut, setCheckingOut] = useState(false);
+  const navigate = useNavigate();
   const closeProductCard = useCallback(() => setSelectedProduct(null), []);
 
   const loadBasket = useCallback(() => {
@@ -115,6 +119,18 @@ const CartPage = () => {
       );
     } catch (err) {
       setCardStatus((prev) => ({ ...prev, [variant.id]: err.message }));
+    }
+  };
+
+  const checkout = async () => {
+    setActionError('');
+    setCheckingOut(true);
+    try {
+      await placeOrder();
+      navigate('/orders');
+    } catch (err) {
+      setActionError(err.message);
+      setCheckingOut(false);
     }
   };
 
@@ -223,6 +239,18 @@ const CartPage = () => {
               <span>Итого ({totalCount} шт.)</span>
               <span style={{ fontSize: '1.15rem' }}>{formatPrice(total)}</span>
             </div>
+          )}
+
+          {!loading && !loadError && items.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-full"
+              style={{ marginTop: '1rem' }}
+              disabled={checkingOut || busyVariantId !== null}
+              onClick={checkout}
+            >
+              {checkingOut ? 'Оформление...' : 'Оформить заказ'}
+            </button>
           )}
         </div>
       </div>

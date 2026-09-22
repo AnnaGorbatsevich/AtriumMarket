@@ -349,6 +349,75 @@ textarea.form-control {
   }
 }
 
+.status-badge.ordered {
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+
+.status-badge.accepted {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge.shipped {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.status-badge.ready_for_pickup {
+  background-color: #ede9fe;
+  color: #6d28d9;
+}
+
+.status-badge.received {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.cancelled {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.order-action-btn {
+  background: white;
+  border: 1px solid #c7d2fe;
+  border-radius: 0.5rem;
+  color: #4f46e5;
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.order-action-btn:hover:not(:disabled) {
+  background-color: #eef2ff;
+  border-color: #4f46e5;
+}
+
+.order-action-btn.danger {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.order-action-btn.danger:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #dc2626;
+}
+
+.order-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .cart-row {
   display: flex;
   align-items: center;

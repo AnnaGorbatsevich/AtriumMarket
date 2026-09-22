@@ -87,6 +87,16 @@ components_manager:
             method: POST,OPTIONS
             task_processor: main-task-processor
 
+        handler-checkout:
+            path: /checkout
+            method: POST,OPTIONS
+            task_processor: main-task-processor
+
+        handler-update-order-status:
+            path: /update_order_status
+            method: POST,OPTIONS
+            task_processor: main-task-processor
+
         http-client-core:
             fs-task-processor: fs-task-processor
 
