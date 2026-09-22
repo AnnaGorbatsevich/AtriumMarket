@@ -1,9 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getJson, authPost } from '../api';
+import { getJson, authGet, authPost } from '../api';
 import { getToken } from '../auth';
 import { pluralizeVariants, formatOptions, minPrice } from '../productDisplay';
+import AddToCartControl from './AddToCartControl';
+import ProductCard from './ProductCard';
 
 const addToCart = (payload) => authPost('/add_basket', getToken(), payload);
+
+// Total quantity per variant (older data may hold several cart rows for one variant).
+const countByVariant = (basket) => {
+  const counts = {};
+  basket.forEach((item) => {
+    counts[item.variantId] = (counts[item.variantId] || 0) + item.quantity;
+  });
+  return counts;
+};
 
 const CatalogPage = () => {
   const [categories, setCategories] = useState([]);
@@ -12,11 +23,20 @@ const CatalogPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [cartStatus, setCartStatus] = useState({});
+  const [cartCounts, setCartCounts] = useState({});
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const closeProductCard = useCallback(() => setSelectedProduct(null), []);
 
   useEffect(() => {
     getJson('/categories')
       .then(setCategories)
       .catch(() => setCategories([]));
+  }, []);
+
+  useEffect(() => {
+    authGet('/get_basket', getToken())
+      .then((basket) => setCartCounts(countByVariant(basket)))
+      .catch(() => setCartCounts({}));
   }, []);
 
   const loadProducts = useCallback(() => {
@@ -42,7 +62,8 @@ const CatalogPage = () => {
         quantity: 1,
         price: variant.price,
       });
-      setCartStatus((prev) => ({ ...prev, [variant.id]: 'added' }));
+      setCartStatus((prev) => ({ ...prev, [variant.id]: undefined }));
+      setCartCounts((prev) => ({ ...prev, [variant.id]: (prev[variant.id] || 0) + 1 }));
     } catch (err) {
       setCartStatus((prev) => ({ ...prev, [variant.id]: err.message }));
     }
@@ -84,7 +105,12 @@ const CatalogPage = () => {
           {!loading &&
             !loadError &&
             products.map((product) => (
-              <div className="product-list-item" key={product.id} style={{ alignItems: 'flex-start' }}>
+              <div
+                className="product-list-item clickable"
+                key={product.id}
+                style={{ alignItems: 'flex-start' }}
+                onClick={() => setSelectedProduct(product)}
+              >
                 <div>
                   <div style={{ fontWeight: 600 }}>{product.name}</div>
                   {product.description && (
@@ -97,33 +123,29 @@ const CatalogPage = () => {
                     {product.variants.length} {pluralizeVariants(product.variants.length)}
                   </div>
                   <div style={{ marginTop: '0.5rem' }}>
-                    {product.variants.map((variant) => {
-                      const status = cartStatus[variant.id];
-                      const isAdding = status === 'adding';
-                      const isAdded = status === 'added';
-                      const isError = status && !isAdding && !isAdded;
-                      return (
-                        <div
-                          key={variant.id}
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}
-                        >
-                          <div className="success-subtext" style={{ margin: 0, fontSize: '0.8rem' }}>
-                            {formatOptions(variant.options)}
-                            {variant.price} ₽ · в наличии {variant.quantity}
-                          </div>
-                          <button
-                            type="button"
-                            className="add-variant-btn"
-                            style={{ width: 'auto', margin: 0, padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-                            disabled={isAdding || variant.quantity === 0}
-                            onClick={() => handleAddToCart(product, variant)}
-                          >
-                            {isAdding ? 'Добавление...' : isAdded ? 'В корзине ✓' : 'В корзину'}
-                          </button>
-                          {isError && <span className="field-error">{status}</span>}
+                    {product.variants.map((variant) => (
+                      <div
+                        key={variant.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '0.5rem',
+                          margin: '0.25rem 0',
+                        }}
+                      >
+                        <div className="success-subtext" style={{ margin: 0, fontSize: '0.8rem' }}>
+                          {formatOptions(variant.options)}
+                          {variant.price} ₽ · в наличии {variant.quantity}
                         </div>
-                      );
-                    })}
+                        <AddToCartControl
+                          variant={variant}
+                          status={cartStatus[variant.id]}
+                          inCart={cartCounts[variant.id] || 0}
+                          onAdd={() => handleAddToCart(product, variant)}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <span className="price-badge">от {minPrice(product.variants)} ₽</span>
@@ -131,6 +153,16 @@ const CatalogPage = () => {
             ))}
         </div>
       </div>
+
+      {selectedProduct && (
+        <ProductCard
+          product={selectedProduct}
+          cartCounts={cartCounts}
+          cartStatus={cartStatus}
+          onAddToCart={handleAddToCart}
+          onClose={closeProductCard}
+        />
+      )}
     </div>
   );
 };

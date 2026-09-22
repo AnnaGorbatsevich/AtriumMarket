@@ -18,6 +18,13 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/get_basket.cpp
     src/handlers/get_orders.hpp
     src/handlers/get_orders.cpp
+    src/handlers/update_basket.hpp
+    src/handlers/update_basket.cpp
+    src/handlers/checkout.hpp
+    src/handlers/checkout.cpp
+    src/handlers/update_order_status.hpp
+    src/handlers/update_order_status.cpp
+    src/order_status.hpp
     src/handlers/hello.hpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)

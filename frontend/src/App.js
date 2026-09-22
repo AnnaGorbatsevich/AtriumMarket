@@ -8,6 +8,7 @@ import ProfilePage from './components/ProfilePage';
 import ProductsPage from './components/ProductsPage';
 import CatalogPage from './components/CatalogPage';
 import CartPage from './components/CartPage';
+import OrdersPage from './components/OrdersPage';
 import Placeholder from './components/Placeholder';
 import { AuthProvider, useAuth } from './auth';
 
@@ -41,7 +42,7 @@ const App = () => (
           <Route path="search" element={<CatalogPage />} />
           <Route path="statistics" element={<Placeholder title="Статистика" />} />
           <Route path="favorites" element={<Placeholder title="Избранное" />} />
-          <Route path="orders" element={<Placeholder title="Заказы" />} />
+          <Route path="orders" element={<OrdersPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="messages" element={<Placeholder title="Сообщения" />} />
           <Route path="notifications" element={<Placeholder title="Уведомления" />} />

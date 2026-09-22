@@ -91,6 +91,7 @@ std::string GetOrderHandler::HandleRequestThrow(
         product["variantId"] = row["variant_id"].As<std::int64_t>();
         product["quantity"] = row["quantity"].As<std::int64_t>();
         product["price"] = row["price"].As<std::int64_t>();
+        product["status"] = row["status"].As<std::string>();
         response_body.PushBack(std::move(product));
     }
 

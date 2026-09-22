@@ -1,5 +1,5 @@
 #include "me.hpp"
-#include "security.hpp"
+#include "profile.hpp"
 
 #include <string_view>
 
@@ -19,18 +19,6 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Origin"}, std::string{"*"});
     response.SetHeader(std::string{"Access-Control-Allow-Methods"}, std::string{"GET, OPTIONS"});
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Authorization, Content-Type"});
-}
-
-constexpr std::string_view kBearerPrefix = "Bearer ";
-
-std::string ExtractBearerToken(const userver::server::http::HttpRequest& request) {
-    const auto& auth_header = request.GetHeader("Authorization");
-    if (!auth_header.starts_with(kBearerPrefix)) {
-        throw userver::server::handlers::Unauthorized(
-            userver::server::handlers::ExternalBody{"Missing bearer token"}
-        );
-    }
-    return auth_header.substr(kBearerPrefix.size());
 }
 
 }  // namespace
@@ -53,16 +41,7 @@ std::string MeHandler::HandleRequestThrow(
         return {};
     }
 
-    const auto token = ExtractBearerToken(request);
-
-    std::string email;
-    try {
-        email = decode_jwt_token(token);
-    } catch (const std::exception&) {
-        throw userver::server::handlers::Unauthorized(
-            userver::server::handlers::ExternalBody{"Invalid or expired token"}
-        );
-    }
+    const auto email = AuthenticatedEmail(request);
 
     auto result = db_dao_.GetMe(email);
 
@@ -70,14 +49,8 @@ std::string MeHandler::HandleRequestThrow(
         throw userver::server::handlers::Unauthorized(userver::server::handlers::ExternalBody{"User not found"});
     }
 
-    userver::formats::json::ValueBuilder response_body;
-    response_body["id"] = result[0]["id"].As<std::int64_t>();
-    response_body["email"] = email;
-    response_body["fullName"] = result[0]["full_name"].As<std::string>();
-    response_body["role"] = result[0]["role"].As<std::string>();
-
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
-    return userver::formats::json::ToString(response_body.ExtractValue());
+    return userver::formats::json::ToString(ProfileToJson(email, result[0]));
 }
 
 }  // namespace user_service

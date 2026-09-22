@@ -269,6 +269,16 @@ textarea.form-control {
   margin-bottom: 0;
 }
 
+.product-list-item.clickable {
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-list-item.clickable:hover {
+  border-color: #4f46e5;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
+}
+
 .status-badge {
   display: inline-block;
   padding: 0.15rem 0.6rem;
@@ -337,6 +347,147 @@ textarea.form-control {
   .variant-row {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.status-badge.ordered {
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+
+.status-badge.accepted {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge.shipped {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.status-badge.ready_for_pickup {
+  background-color: #ede9fe;
+  color: #6d28d9;
+}
+
+.status-badge.received {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.cancelled {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.order-action-btn {
+  background: white;
+  border: 1px solid #c7d2fe;
+  border-radius: 0.5rem;
+  color: #4f46e5;
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.order-action-btn:hover:not(:disabled) {
+  background-color: #eef2ff;
+  border-color: #4f46e5;
+}
+
+.order-action-btn.danger {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.order-action-btn.danger:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #dc2626;
+}
+
+.order-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cart-row-info {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.qty-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qty-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: white;
+  color: #4f46e5;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background-color: #eef2ff;
+  border-color: #4f46e5;
+}
+
+.qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qty-btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.qty-btn.remove {
+  color: #dc2626;
+}
+
+.qty-btn.remove:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #dc2626;
+}
+
+.qty-value {
+  min-width: 2.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.cart-row-total {
+  min-width: 6rem;
+  text-align: right;
+  font-weight: 700;
+  font-size: 1.05rem;
 }
 
 /* App shell (topbar + content) */
