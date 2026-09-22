@@ -27,6 +27,11 @@ components_manager:
             method: GET,POST,OPTIONS
             task_processor: main-task-processor
 
+        handler-seller-stats:
+            path: /seller_stats
+            method: GET,OPTIONS
+            task_processor: main-task-processor
+
         secdist: {}
 
         default-secdist-provider:

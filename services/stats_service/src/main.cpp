@@ -8,11 +8,13 @@
 #include <userver/utils/daemon_run.hpp>
 
 #include "handlers/hello.hpp"
+#include "handlers/seller_stats.hpp"
 #include "order_event_consumer.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
                                .Append<stats_service::HelloHandler>()
+                               .Append<stats_service::SellerStatsHandler>()
                                .Append<userver::components::Secdist>()
                                .Append<userver::components::DefaultSecdistProvider>()
                                .Append<userver::components::ClickHouse>("clickhouse-database")
