@@ -26,9 +26,6 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-// order_events has one row per status transition, so a plain count-by-status would count an
-// order once for every status it ever passed through. Each order is folded down to its latest
-// status first (argMax by event_time), then counted/summed once per order.
 struct SellerStatusStat {
     std::string status;
     std::int64_t orders;

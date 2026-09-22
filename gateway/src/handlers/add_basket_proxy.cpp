@@ -20,8 +20,7 @@ namespace gateway {
 
 namespace {
 
-// buyerId is not accepted here - it always comes from the authenticated caller (see GetMe below).
-constexpr std::string_view kRequiredFields[] = {"sellerId", "variantId", "quantity", "price"};
+constexpr std::string_view kRequiredFields[] = {"variantId", "quantity"};
 
 void ValidateAddBasketPayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
@@ -89,8 +88,33 @@ std::string AddBasketProxyHandler::HandleRequestThrow(
         );
     }
 
+    userver::formats::json::Value variant;
+    try {
+        auto variant_response = http_requests_.Get(
+            ListingServiceUrl(),
+            "/variant?variantId=" + std::to_string(payload["variantId"].As<std::int64_t>()),
+            {},
+            2000
+        );
+
+        if (variant_response->status_code() != 200) {
+            http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(variant_response->status_code()));
+            http_response.SetContentType(userver::http::content_type::kApplicationJson);
+            return variant_response->body();
+        }
+
+        variant = userver::formats::json::FromString(variant_response->body());
+    } catch (const userver::clients::http::BaseException&) {
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kBadGateway,
+            userver::server::handlers::ExternalBody{"listing-service is unavailable"}
+        );
+    }
+
     userver::formats::json::ValueBuilder forwarded_payload{payload};
     forwarded_payload["buyerId"] = identity["id"].As<std::int64_t>();
+    forwarded_payload["sellerId"] = variant["sellerId"].As<std::int64_t>();
+    forwarded_payload["price"] = variant["price"].As<std::int64_t>();
 
     try {
         auto upstream_response = http_requests_.Post(

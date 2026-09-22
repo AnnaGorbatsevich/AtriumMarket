@@ -10,6 +10,7 @@ public:
     userver::storages::postgres::ResultSet GetProducts(int seller_id) const;
     userver::storages::postgres::ResultSet GetCategories() const;
     userver::storages::postgres::ResultSet GetCatalog(std::optional<long int> category_id) const;
+    userver::storages::postgres::ResultSet GetVariant(std::int64_t variant_id) const;
     void InsertProduct(userver::formats::json::Value payload) const;
     //void InsertVariants();
 private:
