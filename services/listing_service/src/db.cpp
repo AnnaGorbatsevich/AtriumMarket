@@ -97,6 +97,21 @@ userver::storages::postgres::ResultSet ListingDAO::GetCatalog(std::optional<long
     return result;
 }
 
+userver::storages::postgres::ResultSet ListingDAO::GetVariant(std::int64_t variant_id) const {
+    std::string_view kSelectVariantQuery = R"~(
+    SELECT v.id, v.price, v.quantity, p.seller_id
+    FROM variants v
+    JOIN products p ON p.id = v.product_id
+    WHERE v.id = $1
+    )~";
+    auto result = pg_cluster_->Execute(
+        userver::storages::postgres::ClusterHostType::kMaster,
+        userver::storages::postgres::Query{std::string{kSelectVariantQuery}},
+        variant_id
+    );
+    return result;
+}
+
 void ListingDAO::InsertProduct(userver::formats::json::Value payload) const {
     std::string kInsertProductQuery = R"~(
     INSERT INTO products (seller_id, name, description, category_id, attributes, status)

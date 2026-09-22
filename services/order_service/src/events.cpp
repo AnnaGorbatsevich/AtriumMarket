@@ -26,7 +26,7 @@ void OrderEventPublisher::Publish(const OrderEvent& event) const {
             userver::formats::json::ToString(message.ExtractValue())
         );
     } catch (const std::exception& e) {
-        LOG_WARNING() << "Failed to publish order event (orderId=" << event.order_id << ") to Kafka: " << e.what();
+        LOG_WARNING() << "Failed to publish order event (orderId=" << e.what();
     }
 }
 

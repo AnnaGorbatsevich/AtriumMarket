@@ -59,7 +59,6 @@ const CatalogPage = () => {
       await addToCart({
         sellerId: product.sellerId,
         variantId: variant.id,
-        quantity: 1,
         price: variant.price,
       });
       setCartStatus((prev) => ({ ...prev, [variant.id]: undefined }));

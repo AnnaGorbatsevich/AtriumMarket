@@ -48,7 +48,7 @@ void OrderEventConsumer::Consume(userver::kafka::MessageBatchView messages) {
                 now
             );
         } catch (const std::exception& e) {
-            LOG_WARNING() << "Skipping malformed order event (offset=" << message.GetOffset() << "): " << e.what();
+            LOG_WARNING() << message.GetOffset() << " : " << e.what();
         }
     }
 }
