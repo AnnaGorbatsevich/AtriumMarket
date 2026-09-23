@@ -4,6 +4,8 @@ import React from 'react';
 const AddToCartControl = ({ variant, status, inCart, onAdd }) => {
   const isAdding = status === 'adding';
   const isError = status && !isAdding;
+  const isSoldOut = variant.quantity === 0;
+  const isLimitReached = !isSoldOut && inCart >= variant.quantity;
 
   return (
     <>
@@ -11,7 +13,7 @@ const AddToCartControl = ({ variant, status, inCart, onAdd }) => {
         type="button"
         className="add-variant-btn"
         style={{ width: 'auto', margin: 0, padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-        disabled={isAdding || variant.quantity === 0}
+        disabled={isAdding || isSoldOut || isLimitReached}
         onClick={(e) => {
           e.stopPropagation();
           onAdd();
