@@ -21,7 +21,7 @@ public:
     std::shared_ptr<userver::clients::http::Response> GetBasket(int64_t buyer_id) const;
     int64_t GetAvailability(int64_t variant_id) const;
     std::shared_ptr<userver::clients::http::Response> GetVariant(int64_t variant_id) const;
-    void DecreaseAvailability(int64_t variant_id, int64_t quantity_to_be_purchased) const;
+    std::shared_ptr<userver::clients::http::Response> DecreaseAvailability(int64_t variant_id, int64_t quantity_to_be_purchased) const;
     //std::shared_ptr<userver::clients::http::Response> UpdateBasket();
 private:
     userver::clients::http::Client& http_client_;

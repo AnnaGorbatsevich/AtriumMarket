@@ -74,13 +74,26 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
 
     userver::formats::json::Value result = userver::formats::json::FromString(upstream_response->body());
     userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
-    for (const auto& row : result) {
-        userver::formats::json::ValueBuilder product;
-        const auto quantity_to_be_purchased = std::min(
-            http_requests_.GetAvailability(row["variantId"].As<std::int64_t>()),
-            row["quantity"].As<std::int64_t>());
-        http_requests_.DecreaseAvailability(row["variantId"].As<std::int64_t>(), quantity_to_be_purchased);
-        //http_requests_.UpdateBasket(identity["id"].As<std::int64_t>(), row["variantId"].As<std::int64_t>(), quantity_to_be_purchased)
+    try {
+        for (const auto& row : result) {
+            const auto variant_id = row["variantId"].As<std::int64_t>();
+            const auto quantity_to_be_purchased = std::min(http_requests_.GetAvailability(variant_id), row["quantity"].As<std::int64_t>());
+
+            auto decrease_response = http_requests_.DecreaseAvailability(variant_id, quantity_to_be_purchased);
+            if (decrease_response->status_code() != 200) {
+                throw userver::server::handlers::CustomHandlerException(
+                    userver::server::handlers::HandlerErrorCode::kConflictState,
+                    userver::server::handlers::ExternalBody{
+                        "Failed to reserve stock for variant " + std::to_string(variant_id)}
+                );
+            }
+            //http_requests_.UpdateBasket(identity["id"].As<std::int64_t>(), row["variantId"].As<std::int64_t>(), quantity_to_be_purchased)
+        }
+    } catch (const userver::clients::http::BaseException&) {
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kBadGateway,
+            userver::server::handlers::ExternalBody{"listing-service is unavailable"}
+        );
     }
 
     try {

@@ -61,12 +61,12 @@ namespace gateway {
         );
     }
 
-    void HttpRequest::DecreaseAvailability(int64_t variant_id, int64_t quantity_to_be_purchased) const {
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::DecreaseAvailability(int64_t variant_id, int64_t quantity_to_be_purchased) const {
         userver::formats::json::ValueBuilder forwarded_payload;
         forwarded_payload["variantId"] = variant_id;
         forwarded_payload["quantity"] = quantity_to_be_purchased;
 
-        Post(
+        return Post(
             ListingServiceUrl(),
             "/decrease_availability",
             {{"Content-Type", "application/json"}},
