@@ -60,7 +60,12 @@ components_manager:
             path: /update_order_status
             method: POST,OPTIONS
             task_processor: main-task-processor
-        
+
+        handler-reset-basket:
+            path: /reset_basket
+            method: POST,OPTIONS
+            task_processor: main-task-processor
+
 
         testsuite-support: {}
 

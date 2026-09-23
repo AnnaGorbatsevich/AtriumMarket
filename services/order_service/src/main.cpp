@@ -15,6 +15,7 @@
 #include "handlers/update_basket.hpp"
 #include "handlers/checkout.hpp"
 #include "handlers/update_order_status.hpp"
+#include "handlers/reset_basket.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
@@ -25,6 +26,7 @@ int main(int argc, char* argv[]) {
                                .Append<order_service::UpdateBasketHandler>()
                                .Append<order_service::CheckoutHandler>()
                                .Append<order_service::UpdateOrderStatusHandler>()
+                               .Append<order_service::ResetBasketHandler>()
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::components::Secdist>()

@@ -70,14 +70,29 @@ std::string GetBasketProxyHandler::HandleRequestThrow(
         userver::formats::json::Value result = userver::formats::json::FromString(upstream_response->body());
         userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
         for (const auto& row : result) {
+            const auto variant_id = row["variantId"].As<std::int64_t>();
+            const auto availability = http_requests_.GetAvailability(variant_id);
+            auto quantity = row["quantity"].As<std::int64_t>();
+
+            if (quantity > availability) {
+                auto reset_response = http_requests_.ResetBasketQuantity(buyer_id, variant_id, availability);
+                if (reset_response->status_code() == 200) {
+                    const auto reset_body = userver::formats::json::FromString(reset_response->body());
+                    if (reset_body["removed"].As<bool>(false)) {
+                        continue;
+                    }
+                    quantity = reset_body["quantity"].As<std::int64_t>();
+                }
+            }
+
             userver::formats::json::ValueBuilder product;
             product["id"] = row["id"].As<std::int64_t>();
             product["buyerId"] = row["buyerId"].As<std::int64_t>();
             product["sellerId"] = row["sellerId"].As<std::int64_t>();
-            product["variantId"] = row["variantId"].As<std::int64_t>();
-            product["quantity"] = row["quantity"].As<std::int64_t>();
+            product["variantId"] = variant_id;
+            product["quantity"] = quantity;
             product["price"] = row["price"].As<std::int64_t>();
-            product["availability"] = http_requests_.GetAvailability(row["variantId"].As<std::int64_t>());;
+            product["availability"] = availability;
             response_body.PushBack(std::move(product));
         }
 

@@ -75,4 +75,19 @@ namespace gateway {
         );
     }
 
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::ResetBasketQuantity(int64_t buyer_id, int64_t variant_id, int64_t max_quantity) const {
+        userver::formats::json::ValueBuilder forwarded_payload;
+        forwarded_payload["buyerId"] = buyer_id;
+        forwarded_payload["variantId"] = variant_id;
+        forwarded_payload["quantity"] = max_quantity;
+
+        return Post(
+            OrderServiceUrl(),
+            "/reset_basket",
+            {{"Content-Type", "application/json"}},
+            2000,
+            userver::formats::json::ToString(forwarded_payload.ExtractValue())
+        );
+    }
+
 } // namespace gateway

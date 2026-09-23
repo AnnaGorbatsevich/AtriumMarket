@@ -26,6 +26,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/checkout.cpp
     src/handlers/update_order_status.hpp
     src/handlers/update_order_status.cpp
+    src/handlers/reset_basket.hpp
+    src/handlers/reset_basket.cpp
     src/order_status.hpp
     src/handlers/hello.hpp
 )

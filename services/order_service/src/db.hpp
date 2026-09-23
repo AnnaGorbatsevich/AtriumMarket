@@ -13,6 +13,9 @@ public:
     userver::storages::postgres::ResultSet GetBasket(int buyer_id) const;
     void InsertOrder(userver::formats::json::Value payload) const;
     bool UpdateCartQuantity(std::int64_t buyer_id, std::int64_t variant_id, std::string action) const;
+    userver::storages::postgres::ResultSet ResetBasketQuantity(
+        std::int64_t buyer_id, std::int64_t variant_id, std::int64_t max_quantity
+    ) const;
 
     std::vector<OrderEvent> Checkout(std::int64_t buyer_id) const;
 
