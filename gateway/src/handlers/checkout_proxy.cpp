@@ -70,6 +70,52 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
     userver::formats::json::ValueBuilder forwarded_payload;
     forwarded_payload["buyerId"] = identity["id"].As<std::int64_t>();
 
+    auto upstream_response = http_requests_.GetBasket(identity["id"].As<std::int64_t>());
+
+    userver::formats::json::Value result = userver::formats::json::FromString(upstream_response->body());
+    userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
+    try {
+        for (const auto& row : result) {
+            const auto variant_id = row["variantId"].As<std::int64_t>();
+            const auto requested_quantity = row["quantity"].As<std::int64_t>();
+            if (requested_quantity <= 0) {
+                continue;
+            }
+
+            auto decrease_response = http_requests_.UpdateAvailability(variant_id, -requested_quantity);
+            if (decrease_response->status_code() == 200) {
+                continue;
+            }
+            if (decrease_response->status_code() != 409) {
+                throw userver::server::handlers::CustomHandlerException(
+                    userver::server::handlers::HandlerErrorCode::kConflictState,
+                    userver::server::handlers::ExternalBody{
+                        "Failed to reserve stock for variant " + std::to_string(variant_id)}
+                );
+            }
+
+            const auto availability = http_requests_.GetAvailability(variant_id);
+            http_requests_.ResetBasketQuantity(identity["id"].As<std::int64_t>(), variant_id, availability);
+            if (availability <= 0) {
+                continue;
+            }
+
+            auto retry_response = http_requests_.UpdateAvailability(variant_id, -availability);
+            if (retry_response->status_code() != 200) {
+                throw userver::server::handlers::CustomHandlerException(
+                    userver::server::handlers::HandlerErrorCode::kConflictState,
+                    userver::server::handlers::ExternalBody{
+                        "Failed to reserve stock for variant " + std::to_string(variant_id)}
+                );
+            }
+        }
+    } catch (const userver::clients::http::BaseException&) {
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kBadGateway,
+            userver::server::handlers::ExternalBody{"listing-service is unavailable"}
+        );
+    }
+
     try {
         auto upstream_response = http_requests_.Post(
             OrderServiceUrl(),

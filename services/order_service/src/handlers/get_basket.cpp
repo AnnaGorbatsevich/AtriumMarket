@@ -51,7 +51,7 @@ std::string GetBasketHandler::HandleRequestThrow(
     if (request.GetMethod() == userver::server::http::HttpMethod::kOptions) {
         return {};
     }
-
+    // TODO: тут должен быть buyerId вместо sellerId
     if (!request.HasArg("sellerId")) {
         throw userver::server::handlers::ClientError(
             userver::server::handlers::ExternalBody{"Missing required query parameter: sellerId"}

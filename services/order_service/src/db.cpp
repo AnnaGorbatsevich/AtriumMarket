@@ -147,6 +147,38 @@ bool OrderDAO::UpdateCartQuantity(std::int64_t buyer_id, std::int64_t variant_id
     }
 }
 
+userver::storages::postgres::ResultSet OrderDAO::ResetBasketQuantity(
+    std::int64_t buyer_id, std::int64_t variant_id, std::int64_t max_quantity
+) const {
+    if (max_quantity <= 0) {
+        static constexpr std::string_view kRemoveQuery = R"~(
+        DELETE FROM orders
+        WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+        RETURNING id
+        )~";
+        return pg_cluster_->Execute(
+            userver::storages::postgres::ClusterHostType::kMaster,
+            userver::storages::postgres::Query{std::string{kRemoveQuery}},
+            buyer_id,
+            variant_id
+        );
+    }
+
+    static constexpr std::string_view kClampQuery = R"~(
+    UPDATE orders
+    SET quantity = LEAST(quantity, $3)
+    WHERE buyer_id = $1 AND variant_id = $2 AND status = 'cart'
+    RETURNING quantity
+    )~";
+    return pg_cluster_->Execute(
+        userver::storages::postgres::ClusterHostType::kMaster,
+        userver::storages::postgres::Query{std::string{kClampQuery}},
+        buyer_id,
+        variant_id,
+        max_quantity
+    );
+}
+
 std::vector<OrderEvent> OrderDAO::Checkout(std::int64_t buyer_id) const {
     static constexpr std::string_view kCheckoutQuery = R"~(
     UPDATE orders SET status = 'ordered' WHERE buyer_id = $1 AND status = 'cart'

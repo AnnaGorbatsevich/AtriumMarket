@@ -1,5 +1,6 @@
-#include "update_order_status.hpp"
-#include "order_status.hpp"
+#include "update_availability.hpp"
+
+#include <string_view>
 
 #include <fmt/format.h>
 
@@ -9,8 +10,9 @@
 #include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_method.hpp>
 #include <userver/server/http/http_response.hpp>
+#include <userver/storages/postgres/component.hpp>
 
-namespace order_service {
+namespace listing_service {
 
 namespace {
 
@@ -20,7 +22,7 @@ void SetCorsHeaders(userver::server::http::HttpResponse& response) {
     response.SetHeader(std::string{"Access-Control-Allow-Headers"}, std::string{"Content-Type"});
 }
 
-constexpr std::string_view kRequiredFields[] = {"orderId", "actorId", "actorRole", "status"};
+constexpr std::string_view kRequiredFields[] = {"variantId", "quantity"};
 
 void ValidatePayload(const userver::formats::json::Value& payload) {
     for (const auto field : kRequiredFields) {
@@ -31,29 +33,18 @@ void ValidatePayload(const userver::formats::json::Value& payload) {
             );
         }
     }
-
-    const auto role = payload["actorRole"].As<std::string>({});
-    if (role != "seller" && role != "buyer") {
-        throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"actorRole must be seller or buyer"}
-        );
-    }
-    if (!IsOrderStatus(payload["status"].As<std::string>({}))) {
-        throw userver::server::handlers::ClientError(userver::server::handlers::ExternalBody{"Invalid status"});
-    }
 }
 
 }  // namespace
 
-UpdateOrderStatusHandler::UpdateOrderStatusHandler(
+UpdateAvailabilityHandler::UpdateAvailabilityHandler(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
-      db_dao_(context),
-      event_publisher_(context) {}
+      db_dao_(context) {}
 
-std::string UpdateOrderStatusHandler::HandleRequestThrow(
+std::string UpdateAvailabilityHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
     userver::server::request::RequestContext&
 ) const {
@@ -73,36 +64,28 @@ std::string UpdateOrderStatusHandler::HandleRequestThrow(
 
     ValidatePayload(payload);
 
-    const auto change = db_dao_.ChangeOrderStatus(
-        payload["orderId"].As<std::int64_t>(),
-        payload["actorId"].As<std::int64_t>(),
-        payload["actorRole"].As<std::string>(),
-        payload["status"].As<std::string>()
-    );
+    const auto variant_id = payload["variantId"].As<std::int64_t>();
+    const auto quantity = payload["quantity"].As<std::int64_t>();
 
-    switch (change.result) {
-        case OrderDAO::StatusChange::kNotFound:
-            throw userver::server::handlers::CustomHandlerException(
-                userver::server::handlers::HandlerErrorCode::kResourceNotFound,
-                userver::server::handlers::ExternalBody{"Order not found"}
+    auto result = db_dao_.UpdateAvailability(variant_id, quantity);
+    if (result.IsEmpty()) {
+        if (db_dao_.GetVariant(variant_id).IsEmpty()) {
+            throw userver::server::handlers::ClientError(
+                userver::server::handlers::ExternalBody{"Invalid variantId"}
             );
-        case OrderDAO::StatusChange::kTransitionNotAllowed:
-            throw userver::server::handlers::ConflictError(
-                userver::server::handlers::ExternalBody{"This status change is not allowed"}
-            );
-        case OrderDAO::StatusChange::kChanged:
-            event_publisher_.Publish(*change.event);
-            break;
+        }
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kConflictState,
+            userver::server::handlers::ExternalBody{"Not enough stock available"}
+        );
     }
 
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
-    response_body["variantId"] = change.event->variant_id;
-    response_body["quantity"] = change.event->quantity;
-    response_body["newStatus"] = change.event->status;
+    response_body["remaining"] = result[0]["remaining"].As<std::int64_t>();
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(response_body.ExtractValue());
 }
 
-}  // namespace order_service
+}  // namespace listing_service

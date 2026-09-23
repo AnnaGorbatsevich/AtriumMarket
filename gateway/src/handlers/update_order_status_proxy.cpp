@@ -101,6 +101,18 @@ std::string UpdateOrderStatusProxyHandler::HandleRequestThrow(
             userver::formats::json::ToString(forwarded_payload.ExtractValue())
         );
 
+        if (upstream_response->status_code() == 200) {
+            const auto body = userver::formats::json::FromString(upstream_response->body());
+            if (body["newStatus"].As<std::string>({}) == "cancelled") {
+                try {
+                    http_requests_.UpdateAvailability(
+                        body["variantId"].As<std::int64_t>(), body["quantity"].As<std::int64_t>()
+                    );
+                } catch (const userver::clients::http::BaseException&) {
+                }
+            }
+        }
+
         http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
         http_response.SetContentType(userver::http::content_type::kApplicationJson);
         return upstream_response->body();

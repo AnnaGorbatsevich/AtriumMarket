@@ -174,4 +174,25 @@ void ListingDAO::InsertProduct(userver::formats::json::Value payload) const {
     }
 }
 
+userver::storages::postgres::ResultSet ListingDAO::UpdateAvailability(std::int64_t variant_id, std::int64_t quantity) const {
+    std::string_view kQuery = R"~(
+    UPDATE variants
+    SET quantity = quantity + $2
+    WHERE id = $1 AND quantity + $2 >= 0
+    RETURNING quantity AS remaining
+    )~";
+
+    auto transaction = pg_cluster_->Begin(
+        userver::storages::postgres::ClusterHostType::kMaster,
+        userver::storages::postgres::TransactionOptions{}
+    );
+    auto result = transaction.Execute(
+        userver::storages::postgres::Query{std::string{kQuery}},
+        variant_id,
+        quantity
+    );
+    transaction.Commit();
+    return result;
+}
+
 } // namespace listing_service
