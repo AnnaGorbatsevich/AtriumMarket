@@ -77,20 +77,31 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
     try {
         for (const auto& row : result) {
             const auto variant_id = row["variantId"].As<std::int64_t>();
-            const auto availability = http_requests_.GetAvailability(variant_id);
             const auto requested_quantity = row["quantity"].As<std::int64_t>();
-
-            if (requested_quantity > availability) {
-                http_requests_.ResetBasketQuantity(identity["id"].As<std::int64_t>(), variant_id, availability);
-            }
-
-            const auto quantity_to_be_purchased = std::min(availability, requested_quantity);
-            if (quantity_to_be_purchased <= 0) {
+            if (requested_quantity <= 0) {
                 continue;
             }
 
-            auto decrease_response = http_requests_.UpdateAvailability(variant_id, -quantity_to_be_purchased);
-            if (decrease_response->status_code() != 200) {
+            auto decrease_response = http_requests_.UpdateAvailability(variant_id, -requested_quantity);
+            if (decrease_response->status_code() == 200) {
+                continue;
+            }
+            if (decrease_response->status_code() != 409) {
+                throw userver::server::handlers::CustomHandlerException(
+                    userver::server::handlers::HandlerErrorCode::kConflictState,
+                    userver::server::handlers::ExternalBody{
+                        "Failed to reserve stock for variant " + std::to_string(variant_id)}
+                );
+            }
+
+            const auto availability = http_requests_.GetAvailability(variant_id);
+            http_requests_.ResetBasketQuantity(identity["id"].As<std::int64_t>(), variant_id, availability);
+            if (availability <= 0) {
+                continue;
+            }
+
+            auto retry_response = http_requests_.UpdateAvailability(variant_id, -availability);
+            if (retry_response->status_code() != 200) {
                 throw userver::server::handlers::CustomHandlerException(
                     userver::server::handlers::HandlerErrorCode::kConflictState,
                     userver::server::handlers::ExternalBody{

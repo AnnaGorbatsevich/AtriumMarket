@@ -69,8 +69,14 @@ std::string UpdateAvailabilityHandler::HandleRequestThrow(
 
     auto result = db_dao_.UpdateAvailability(variant_id, quantity);
     if (result.IsEmpty()) {
-        throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"Invalid variantId"}
+        if (db_dao_.GetVariant(variant_id).IsEmpty()) {
+            throw userver::server::handlers::ClientError(
+                userver::server::handlers::ExternalBody{"Invalid variantId"}
+            );
+        }
+        throw userver::server::handlers::CustomHandlerException(
+            userver::server::handlers::HandlerErrorCode::kConflictState,
+            userver::server::handlers::ExternalBody{"Not enough stock available"}
         );
     }
 
