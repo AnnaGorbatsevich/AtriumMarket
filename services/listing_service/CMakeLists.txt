@@ -23,8 +23,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/handlers/catalog.cpp
     src/handlers/variant.hpp
     src/handlers/variant.cpp
-    src/handlers/decrease_availability.hpp
-    src/handlers/decrease_availability.cpp
+    src/handlers/update_availability.hpp
+    src/handlers/update_availability.cpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core userver::postgresql userver::postgresql-dynamic-configs crypt)
 

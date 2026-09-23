@@ -89,7 +89,7 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
                 continue;
             }
 
-            auto decrease_response = http_requests_.DecreaseAvailability(variant_id, quantity_to_be_purchased);
+            auto decrease_response = http_requests_.UpdateAvailability(variant_id, -quantity_to_be_purchased);
             if (decrease_response->status_code() != 200) {
                 throw userver::server::handlers::CustomHandlerException(
                     userver::server::handlers::HandlerErrorCode::kConflictState,

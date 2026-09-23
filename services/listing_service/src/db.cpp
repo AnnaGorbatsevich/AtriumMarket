@@ -174,10 +174,10 @@ void ListingDAO::InsertProduct(userver::formats::json::Value payload) const {
     }
 }
 
-userver::storages::postgres::ResultSet ListingDAO::DecreaseAvailability(std::int64_t variant_id, std::int64_t quantity) const {
+userver::storages::postgres::ResultSet ListingDAO::UpdateAvailability(std::int64_t variant_id, std::int64_t quantity) const {
     std::string_view kQuery = R"~(
     UPDATE variants
-    SET quantity = GREATEST(quantity - $2, 0)
+    SET quantity = GREATEST(quantity + $2, 0)
     WHERE id = $1
     RETURNING quantity AS remaining
     )~";

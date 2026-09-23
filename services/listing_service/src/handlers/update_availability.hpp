@@ -6,11 +6,11 @@
 
 namespace listing_service {
 
-struct DecreaseAvailabilityHandler final : public userver::server::handlers::HttpHandlerBase {
+struct UpdateAvailabilityHandler final : public userver::server::handlers::HttpHandlerBase {
 public:
-    static constexpr std::string_view kName = "handler-decrease-availability";
+    static constexpr std::string_view kName = "handler-update-availability";
 
-    DecreaseAvailabilityHandler(
+    UpdateAvailabilityHandler(
         const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context
     );

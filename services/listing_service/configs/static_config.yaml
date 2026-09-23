@@ -52,8 +52,8 @@ components_manager:
             method: GET,OPTIONS
             task_processor: main-task-processor
 
-        handler-decrease-availability:
-            path: /decrease_availability
+        handler-update-availability:
+            path: /update_availability
             method: POST,OPTIONS
             task_processor: main-task-processor
 

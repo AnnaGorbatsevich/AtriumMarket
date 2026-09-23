@@ -105,8 +105,8 @@ std::string UpdateOrderStatusProxyHandler::HandleRequestThrow(
             const auto body = userver::formats::json::FromString(upstream_response->body());
             if (body["newStatus"].As<std::string>({}) == "cancelled") {
                 try {
-                    http_requests_.DecreaseAvailability(
-                        body["variantId"].As<std::int64_t>(), -body["quantity"].As<std::int64_t>()
+                    http_requests_.UpdateAvailability(
+                        body["variantId"].As<std::int64_t>(), body["quantity"].As<std::int64_t>()
                     );
                 } catch (const userver::clients::http::BaseException&) {
                 }

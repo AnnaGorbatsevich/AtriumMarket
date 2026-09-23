@@ -1,4 +1,4 @@
-#include "decrease_availability.hpp"
+#include "update_availability.hpp"
 
 #include <string_view>
 
@@ -37,14 +37,14 @@ void ValidatePayload(const userver::formats::json::Value& payload) {
 
 }  // namespace
 
-DecreaseAvailabilityHandler::DecreaseAvailabilityHandler(
+UpdateAvailabilityHandler::UpdateAvailabilityHandler(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context
 )
     : HttpHandlerBase(config, context),
       db_dao_(context) {}
 
-std::string DecreaseAvailabilityHandler::HandleRequestThrow(
+std::string UpdateAvailabilityHandler::HandleRequestThrow(
     const userver::server::http::HttpRequest& request,
     userver::server::request::RequestContext&
 ) const {
@@ -67,7 +67,7 @@ std::string DecreaseAvailabilityHandler::HandleRequestThrow(
     const auto variant_id = payload["variantId"].As<std::int64_t>();
     const auto quantity = payload["quantity"].As<std::int64_t>();
 
-    auto result = db_dao_.DecreaseAvailability(variant_id, quantity);
+    auto result = db_dao_.UpdateAvailability(variant_id, quantity);
     if (result.IsEmpty()) {
         throw userver::server::handlers::ClientError(
             userver::server::handlers::ExternalBody{"Invalid variantId"}

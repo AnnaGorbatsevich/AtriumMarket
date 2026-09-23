@@ -11,7 +11,7 @@
 #include "handlers/hello.hpp"
 #include "handlers/products.hpp"
 #include "handlers/variant.hpp"
-#include "handlers/decrease_availability.hpp"
+#include "handlers/update_availability.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
                                .Append<listing_service::ProductsHandler>()
                                .Append<listing_service::CatalogHandler>()
                                .Append<listing_service::VariantHandler>()
-                               .Append<listing_service::DecreaseAvailabilityHandler>()
+                               .Append<listing_service::UpdateAvailabilityHandler>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::clients::dns::Component>();
