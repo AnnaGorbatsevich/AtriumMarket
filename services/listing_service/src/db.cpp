@@ -5,6 +5,7 @@
 #include <userver/storages/postgres/io/chrono.hpp>
 #include <userver/storages/postgres/io/json_types.hpp>
 #include <userver/storages/postgres/io/optional.hpp>
+#include <userver/logging/log.hpp>
 #include <userver/server/handlers/exceptions.hpp>
 #include "db.hpp"
 
@@ -192,6 +193,13 @@ userver::storages::postgres::ResultSet ListingDAO::UpdateAvailability(std::int64
         quantity
     );
     transaction.Commit();
+
+    if (result.IsEmpty()) {
+        LOG_WARNING() << "не удалось изменить остаток: variant_id=" << variant_id << ", quantity=" << quantity;
+    } else {
+        LOG_INFO() << "остаток изменен: variant_id=" << variant_id << ", quantity=" << quantity
+                   << ", остаток=" << result[0]["remaining"].As<std::int64_t>();
+    }
     return result;
 }
 
