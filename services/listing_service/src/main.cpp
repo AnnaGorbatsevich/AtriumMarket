@@ -1,6 +1,7 @@
 
 #include <userver/clients/dns/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
+#include <userver/server/handlers/server_monitor.hpp>
 #include <userver/storages/postgres/component.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 #include <userver/utils/daemon_run.hpp>
@@ -12,6 +13,7 @@
 #include "handlers/products.hpp"
 #include "handlers/variant.hpp"
 #include "handlers/update_availability.hpp"
+#include "stock_metrics.hpp"
 
 int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList()
@@ -22,6 +24,8 @@ int main(int argc, char* argv[]) {
                                .Append<listing_service::CatalogHandler>()
                                .Append<listing_service::VariantHandler>()
                                .Append<listing_service::UpdateAvailabilityHandler>()
+                               .Append<listing_service::StockMetrics>()
+                               .Append<userver::server::handlers::ServerMonitor>()
                                .Append<userver::components::Postgres>("postgres-db")
                                .Append<userver::components::TestsuiteSupport>()
                                .Append<userver::clients::dns::Component>();

@@ -13,6 +13,9 @@ components_manager:
             listener:
                 port: $server-port
                 task_processor: main-task-processor
+            listener-monitor:
+                port: $monitor-server-port
+                task_processor: main-task-processor
 
         logging:
             fs-task-processor: fs-task-processor
@@ -57,6 +60,13 @@ components_manager:
             method: POST,OPTIONS
             task_processor: main-task-processor
 
+        handler-server-monitor:
+            path: /metrics
+            method: GET
+            task_processor: main-task-processor
+            format: prometheus
+
+        stock-metrics: {}
 
         postgres-db:
             dbconnection#env: DB_CONNECTION_STRING

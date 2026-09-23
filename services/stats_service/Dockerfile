@@ -31,6 +31,6 @@ COPY --from=build /lib/libclickhouse-cpp-lib.so /lib/libclickhouse-cpp-lib.so
 COPY --from=build /app/build/stats_service /app/stats_service
 COPY configs /app/configs
 
-EXPOSE 8050
+EXPOSE 8050 8051
 
 CMD ["/app/stats_service", "--config", "/app/configs/static_config.yaml"]

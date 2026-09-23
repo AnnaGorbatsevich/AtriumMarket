@@ -3,3 +3,4 @@ worker-fs-threads: 2
 logger-level: info
 
 server-port: 8060
+monitor-server-port: 8061

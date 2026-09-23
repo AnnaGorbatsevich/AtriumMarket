@@ -5,6 +5,7 @@
 #include <userver/components/component_context.hpp>
 #include <userver/formats/json.hpp>
 #include <userver/http/content_type.hpp>
+#include <userver/logging/log.hpp>
 #include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_method.hpp>
 #include <userver/server/http/http_response.hpp>
@@ -87,6 +88,9 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
                 continue;
             }
             if (decrease_response->status_code() != 409) {
+                LOG_WARNING() << "оформление заказа: listing-service не доступен, variant_id="
+                               << variant_id << ", quantity=" << requested_quantity
+                               << ", status=" << decrease_response->status_code();
                 throw userver::server::handlers::CustomHandlerException(
                     userver::server::handlers::HandlerErrorCode::kConflictState,
                     userver::server::handlers::ExternalBody{
@@ -94,6 +98,8 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
                 );
             }
 
+            LOG_INFO() << "оформление заказа: не хватает остатка для variant_id=" << variant_id
+                       << ", запрошено=" << requested_quantity;
             const auto availability = http_requests_.GetAvailability(variant_id);
             http_requests_.ResetBasketQuantity(identity["id"].As<std::int64_t>(), variant_id, availability);
             if (availability <= 0) {
@@ -102,6 +108,8 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
 
             auto retry_response = http_requests_.UpdateAvailability(variant_id, -availability);
             if (retry_response->status_code() != 200) {
+                LOG_WARNING() << "оформление заказа: повторная попытка резерва не удалась, variant_id=" << variant_id
+                               << ", остаток=" << availability << ", status=" << retry_response->status_code();
                 throw userver::server::handlers::CustomHandlerException(
                     userver::server::handlers::HandlerErrorCode::kConflictState,
                     userver::server::handlers::ExternalBody{

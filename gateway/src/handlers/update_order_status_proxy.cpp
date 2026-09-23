@@ -7,6 +7,7 @@
 #include <userver/components/component_context.hpp>
 #include <userver/formats/json.hpp>
 #include <userver/http/content_type.hpp>
+#include <userver/logging/log.hpp>
 #include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_method.hpp>
 #include <userver/server/http/http_response.hpp>
@@ -104,11 +105,19 @@ std::string UpdateOrderStatusProxyHandler::HandleRequestThrow(
         if (upstream_response->status_code() == 200) {
             const auto body = userver::formats::json::FromString(upstream_response->body());
             if (body["newStatus"].As<std::string>({}) == "cancelled") {
+                const auto variant_id = body["variantId"].As<std::int64_t>();
+                const auto quantity = body["quantity"].As<std::int64_t>();
                 try {
-                    http_requests_.UpdateAvailability(
-                        body["variantId"].As<std::int64_t>(), body["quantity"].As<std::int64_t>()
-                    );
+                    auto restock_response = http_requests_.UpdateAvailability(variant_id, quantity);
+                    if (restock_response->status_code() != 200) {
+                        LOG_WARNING() << "отмена заказа: listing-service отказал в возврате остатка, variant_id="
+                                       << variant_id << ", quantity=" << quantity
+                                       << ", status=" << restock_response->status_code()
+                                       << " — остаток может быть занижен";
+                    }
                 } catch (const userver::clients::http::BaseException&) {
+                    LOG_WARNING() << "отмена заказа: listing-service недоступен, variant_id="
+                                   << variant_id << ", quantity=" << quantity;
                 }
             }
         }

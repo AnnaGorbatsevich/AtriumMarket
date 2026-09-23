@@ -2,6 +2,7 @@
 #include <userver/storages/postgres/cluster.hpp>
 #include <vector>
 
+#include "stock_metrics.hpp"
 
 namespace listing_service {
 struct ListingDAO {
@@ -16,5 +17,6 @@ public:
     //void InsertVariants();
 private:
     userver::storages::postgres::ClusterPtr pg_cluster_;
+    StockMetrics& stock_metrics_;
 };
-} // namespace listing_service 
+} // namespace listing_service

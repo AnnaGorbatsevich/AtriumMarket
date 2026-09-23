@@ -2,7 +2,7 @@
 
 ## Про проект
 
-Технологии: C++, userver, testsuite, posqtgresql, clickhouse, kafka, Docker.
+Технологии: C++, userver, testsuite, posqtgresql, clickhouse, kafka, Docker, Prometheus, Grafana
 
 Это маркетплейс с ролями покупатель и продавец.
 
