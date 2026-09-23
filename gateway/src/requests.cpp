@@ -61,4 +61,18 @@ namespace gateway {
         );
     }
 
+    void HttpRequest::DecreaseAvailability(int64_t variant_id, int64_t quantity_to_be_purchased) const {
+        userver::formats::json::ValueBuilder forwarded_payload;
+        forwarded_payload["variantId"] = variant_id;
+        forwarded_payload["quantity"] = quantity_to_be_purchased;
+
+        Post(
+            ListingServiceUrl(),
+            "/decrease_availability",
+            {{"Content-Type", "application/json"}},
+            2000,
+            userver::formats::json::ToString(forwarded_payload.ExtractValue())
+        );
+    }
+
 } // namespace gateway

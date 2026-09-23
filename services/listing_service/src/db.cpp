@@ -174,4 +174,31 @@ void ListingDAO::InsertProduct(userver::formats::json::Value payload) const {
     }
 }
 
+void ListingDAO::DecreaseAvailability(userver::formats::json::Value payload) const {
+    std::string kQuery = R"~(
+    UPDATE variants SET quantity = quantity - $1
+    WHERE id = $2
+    )~";
+
+    const auto variant_id = payload["variantId"].As<std::int64_t>();
+    const auto quantity = payload["quantity"].As<std::int64_t>();
+    try {
+        auto transaction = pg_cluster_->Begin(
+            userver::storages::postgres::ClusterHostType::kMaster,
+            userver::storages::postgres::TransactionOptions{}
+        );
+        transaction.Execute(
+            userver::storages::postgres::Query{std::string{kQuery}},
+            quantity,
+            variant_id
+        );
+        transaction.Commit();
+    } catch (const userver::storages::postgres::IntegrityConstraintViolation&) {
+        throw userver::server::handlers::ClientError(
+            userver::server::handlers::ExternalBody{"Invalid variantId"}
+        );
+    }
+    
+}
+
 } // namespace listing_service

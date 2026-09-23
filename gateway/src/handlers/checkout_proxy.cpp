@@ -70,6 +70,19 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
     userver::formats::json::ValueBuilder forwarded_payload;
     forwarded_payload["buyerId"] = identity["id"].As<std::int64_t>();
 
+    auto upstream_response = http_requests_.GetBasket(identity["id"].As<std::int64_t>());
+
+    userver::formats::json::Value result = userver::formats::json::FromString(upstream_response->body());
+    userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
+    for (const auto& row : result) {
+        userver::formats::json::ValueBuilder product;
+        const auto quantity_to_be_purchased = std::min(
+            http_requests_.GetAvailability(row["variantId"].As<std::int64_t>()),
+            row["quantity"].As<std::int64_t>());
+        http_requests_.DecreaseAvailability(row["variantId"].As<std::int64_t>(), quantity_to_be_purchased);
+        //http_requests_.UpdateBasket(identity["id"].As<std::int64_t>(), row["variantId"].As<std::int64_t>(), quantity_to_be_purchased)
+    }
+
     try {
         auto upstream_response = http_requests_.Post(
             OrderServiceUrl(),
