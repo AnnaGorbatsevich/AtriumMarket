@@ -13,6 +13,9 @@ components_manager:
             listener:
                 port: $server-port
                 task_processor: main-task-processor
+            listener-monitor:
+                port: $monitor-server-port
+                task_processor: main-task-processor
 
         logging:
             fs-task-processor: fs-task-processor
@@ -101,6 +104,12 @@ components_manager:
             path: /seller_stats
             method: GET,OPTIONS
             task_processor: main-task-processor
+
+        handler-server-monitor:
+            path: /metrics
+            method: GET
+            task_processor: main-task-processor
+            format: prometheus
 
         http-client-core:
             fs-task-processor: fs-task-processor

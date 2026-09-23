@@ -12,6 +12,7 @@ services:
       context: ../gateway
     ports:
       - "8080:8080"
+      - "8081:8081"
     environment:
       USER_SERVICE_URL: http://user-service:8090
       LISTING_SERVICE_URL: http://listing-service:8070
@@ -29,6 +30,7 @@ services:
     hostname: user-service
     ports:
       - "8090:8090"
+      - "8091:8091"
     environment:
       JWT_SECRET: dev-only-secret-do-not-use-in-prod
       DB_CONNECTION_STRING: postgresql://user_service:devpassword@user-db:5432/atrium_users
@@ -42,6 +44,7 @@ services:
     hostname: listing-service
     ports:
       - "8070:8070"
+      - "8071:8071"
     environment:
       DB_CONNECTION_STRING: postgresql://listing_service:devpassword@listing-db:5432/atrium_listings
     depends_on:
@@ -54,6 +57,7 @@ services:
     hostname: order-service
     ports:
       - "8060:8060"
+      - "8061:8061"
     environment:
       DB_CONNECTION_STRING: postgresql://order_service:devpassword@order-db:5432/atrium_order
       SECDIST_CONFIG: '{"kafka_settings":{"kafka-producer":{"brokers":"kafka:9092","username":"","password":""}}}'
@@ -67,6 +71,7 @@ services:
     hostname: stats-service
     ports:
       - "8050:8050"
+      - "8051:8051"
     environment:
       SECDIST_CONFIG: '{"clickhouse_settings":{"clickhouse-database":{"hosts":["clickhouse-db"],"port":9000,"user":"default","password":"","dbname":"default"}},"kafka_settings":{"kafka-consumer":{"brokers":"kafka:9092","username":"","password":""}}}'
     depends_on:

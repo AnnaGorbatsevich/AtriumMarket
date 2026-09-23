@@ -19,8 +19,9 @@ userver::formats::json::Value ObjectOrEmpty(const userver::formats::json::Value&
     return value;
 }
 
-ListingDAO::ListingDAO(const userver::components::ComponentContext& context) : 
-            pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()) {}
+ListingDAO::ListingDAO(const userver::components::ComponentContext& context) :
+            pg_cluster_(context.FindComponent<userver::components::Postgres>("postgres-db").GetCluster()),
+            stock_metrics_(context.FindComponent<StockMetrics>()) {}
 
 userver::storages::postgres::ResultSet ListingDAO::GetProducts(int seller_id) const {
 
@@ -194,7 +195,14 @@ userver::storages::postgres::ResultSet ListingDAO::UpdateAvailability(std::int64
     );
     transaction.Commit();
 
-    if (result.IsEmpty()) {
+    const bool ok = !result.IsEmpty();
+    if (quantity < 0) {
+        stock_metrics_.AccountDecrease(ok);
+    } else {
+        stock_metrics_.AccountRestock(ok);
+    }
+
+    if (!ok) {
         LOG_WARNING() << "не удалось изменить остаток: variant_id=" << variant_id << ", quantity=" << quantity;
     } else {
         LOG_INFO() << "остаток изменен: variant_id=" << variant_id << ", quantity=" << quantity

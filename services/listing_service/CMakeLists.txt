@@ -12,6 +12,8 @@ include_directories(src)
 add_library(${PROJECT_NAME}_objs OBJECT
     src/db.cpp
     src/db.hpp
+    src/stock_metrics.hpp
+    src/stock_metrics.cpp
     src/handlers/hello.hpp
     src/handlers/add_product.hpp
     src/handlers/add_product.cpp

@@ -29,6 +29,6 @@ WORKDIR /app
 COPY --from=build /app/build/user_service /app/user_service
 COPY configs /app/configs
 
-EXPOSE 8090
+EXPOSE 8090 8091
 
 CMD ["/app/user_service", "--config", "/app/configs/static_config.yaml"]

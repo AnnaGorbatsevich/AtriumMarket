@@ -4,6 +4,7 @@
 #include <userver/clients/http/component_core.hpp>
 #include <userver/clients/http/middlewares/pipeline_component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
+#include <userver/server/handlers/server_monitor.hpp>
 #include <userver/utils/daemon_run.hpp>
 
 #include "handlers/register_proxy.hpp"
@@ -41,6 +42,7 @@ int main(int argc, char* argv[]) {
                                .Append<gateway::CheckoutProxyHandler>()
                                .Append<gateway::UpdateOrderStatusProxyHandler>()
                                .Append<gateway::SellerStatsProxyHandler>()
+                               .Append<userver::server::handlers::ServerMonitor>()
                                .Append<userver::components::HttpClientCore>()
                                .Append<userver::clients::http::MiddlewarePipelineComponent>()
                                .Append<userver::components::HttpClient>()

@@ -31,6 +31,6 @@ WORKDIR /app
 COPY --from=build /app/build/order_service /app/order_service
 COPY configs /app/configs
 
-EXPOSE 8060
+EXPOSE 8060 8061
 
 CMD ["/app/order_service", "--config", "/app/configs/static_config.yaml"]

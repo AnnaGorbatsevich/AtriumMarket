@@ -29,6 +29,6 @@ WORKDIR /app
 COPY --from=build /app/build/gateway /app/gateway
 COPY configs /app/configs
 
-EXPOSE 8080
+EXPOSE 8080 8081
 
 CMD ["/app/gateway", "--config", "/app/configs/static_config.yaml"]
