@@ -18,6 +18,10 @@ public:
         int timeout, std::string request
     ) const;
     std::shared_ptr<userver::clients::http::Response> GetMe(const userver::server::http::HttpRequest& request) const;
+    std::shared_ptr<userver::clients::http::Response> GetBasket(int64_t buyer_id) const;
+    int64_t GetAvailability(int64_t variant_id) const;
+    std::shared_ptr<userver::clients::http::Response> GetVariant(int64_t variant_id) const;
+    //std::shared_ptr<userver::clients::http::Response> UpdateBasket();
 private:
     userver::clients::http::Client& http_client_;
 };

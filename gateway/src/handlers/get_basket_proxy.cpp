@@ -65,14 +65,25 @@ std::string GetBasketProxyHandler::HandleRequestThrow(
     const auto buyer_id = identity["id"].As<std::int64_t>();
 
     try {
-        // order_service's /get_basket reads a query parameter named "sellerId" but actually
-        // filters by buyer_id - pass the authenticated user's own id there.
-        auto upstream_response =
-            http_requests_.Get(OrderServiceUrl(), "/get_basket?sellerId=" + std::to_string(buyer_id), {}, 2000);
+        auto upstream_response = http_requests_.GetBasket(buyer_id);
+
+        userver::formats::json::Value result = userver::formats::json::FromString(upstream_response->body());
+        userver::formats::json::ValueBuilder response_body{userver::formats::common::Type::kArray};
+        for (const auto& row : result) {
+            userver::formats::json::ValueBuilder product;
+            product["id"] = row["id"].As<std::int64_t>();
+            product["buyerId"] = row["buyerId"].As<std::int64_t>();
+            product["sellerId"] = row["sellerId"].As<std::int64_t>();
+            product["variantId"] = row["variantId"].As<std::int64_t>();
+            product["quantity"] = row["quantity"].As<std::int64_t>();
+            product["price"] = row["price"].As<std::int64_t>();
+            product["availability"] = http_requests_.GetAvailability(row["variantId"].As<std::int64_t>());;
+            response_body.PushBack(std::move(product));
+        }
 
         http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(upstream_response->status_code()));
         http_response.SetContentType(userver::http::content_type::kApplicationJson);
-        return upstream_response->body();
+        return userver::formats::json::ToString(response_body.ExtractValue());
     } catch (const userver::clients::http::BaseException&) {
         throw userver::server::handlers::CustomHandlerException(
             userver::server::handlers::HandlerErrorCode::kBadGateway,

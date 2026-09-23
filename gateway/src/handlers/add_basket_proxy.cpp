@@ -90,12 +90,7 @@ std::string AddBasketProxyHandler::HandleRequestThrow(
 
     userver::formats::json::Value variant;
     try {
-        auto variant_response = http_requests_.Get(
-            ListingServiceUrl(),
-            "/variant?variantId=" + std::to_string(payload["variantId"].As<std::int64_t>()),
-            {},
-            2000
-        );
+        auto variant_response = http_requests_.GetVariant(payload["variantId"].As<std::int64_t>());
 
         if (variant_response->status_code() != 200) {
             http_response.SetStatus(static_cast<userver::server::http::HttpStatus>(variant_response->status_code()));

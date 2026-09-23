@@ -28,6 +28,7 @@ const mergeByVariant = (items) => {
     if (existing) {
       existing.quantity += item.quantity;
       existing.price = item.price;
+      existing.availability = item.availability;
     } else {
       merged.set(item.variantId, { ...item });
     }
@@ -187,6 +188,11 @@ const CartPage = () => {
                     <div className="success-subtext" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
                       {formatPrice(item.price)} за шт.
                     </div>
+                    {typeof item.availability === 'number' && (
+                      <div className="success-subtext" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
+                        в наличии {item.availability}
+                      </div>
+                    )}
                   </div>
 
                   <div className="qty-control" onClick={(e) => e.stopPropagation()}>
@@ -217,7 +223,7 @@ const CartPage = () => {
                       type="button"
                       className="qty-btn"
                       aria-label="Увеличить количество"
-                      disabled={busy}
+                      disabled={busy || item.quantity >= item.availability}
                       onClick={() => changeQuantity(item, 'increase')}
                     >
                       +

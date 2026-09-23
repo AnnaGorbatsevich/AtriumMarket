@@ -42,4 +42,23 @@ namespace gateway {
         return Get(UserServiceUrl(), "/me", {{"Authorization", request.GetHeader("Authorization")}}, 2000);
     }
 
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::GetBasket(int64_t buyer_id) const {
+        return Get(OrderServiceUrl(), "/get_basket?sellerId=" + std::to_string(buyer_id), {}, 2000);
+    }
+
+    int64_t HttpRequest::GetAvailability(int64_t variant_id) const{
+        auto result = GetVariant(variant_id);
+        userver::formats::json::Value variant = userver::formats::json::FromString(result->body());
+        return variant["quantity"].As<std::int64_t>();
+    }
+
+    std::shared_ptr<userver::clients::http::Response> HttpRequest::GetVariant(int64_t variant_id) const{
+        return Get(
+            ListingServiceUrl(),
+            "/variant?variantId=" + std::to_string(variant_id),
+            {},
+            2000
+        );
+    }
+
 } // namespace gateway
