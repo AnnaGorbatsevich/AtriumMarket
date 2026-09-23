@@ -176,14 +176,10 @@ void ListingDAO::InsertProduct(userver::formats::json::Value payload) const {
 
 userver::storages::postgres::ResultSet ListingDAO::DecreaseAvailability(std::int64_t variant_id, std::int64_t quantity) const {
     std::string_view kQuery = R"~(
-    WITH locked AS (
-        SELECT quantity FROM variants WHERE id = $1 FOR UPDATE
-    )
     UPDATE variants
-    SET quantity = variants.quantity - LEAST(locked.quantity, $2)
-    FROM locked
-    WHERE variants.id = $1
-    RETURNING variants.quantity AS remaining, LEAST(locked.quantity, $2) AS decreased
+    SET quantity = GREATEST(quantity - $2, 0)
+    WHERE id = $1
+    RETURNING quantity AS remaining
     )~";
 
     auto transaction = pg_cluster_->Begin(

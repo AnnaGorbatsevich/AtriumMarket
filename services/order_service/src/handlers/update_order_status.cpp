@@ -97,6 +97,9 @@ std::string UpdateOrderStatusHandler::HandleRequestThrow(
 
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
+    response_body["variantId"] = change.event->variant_id;
+    response_body["quantity"] = change.event->quantity;
+    response_body["newStatus"] = change.event->status;
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(response_body.ExtractValue());

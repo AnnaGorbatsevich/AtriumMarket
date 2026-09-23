@@ -1,26 +1,16 @@
 #include "decrease_availability.hpp"
 
-#include <algorithm>
-#include <array>
-#include <iterator>
-#include <optional>
 #include <string_view>
 
 #include <fmt/format.h>
 
 #include <userver/components/component_context.hpp>
-#include <userver/formats/common/type.hpp>
 #include <userver/formats/json.hpp>
-#include <userver/formats/parse/common_containers.hpp>
 #include <userver/http/content_type.hpp>
 #include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_method.hpp>
 #include <userver/server/http/http_response.hpp>
 #include <userver/storages/postgres/component.hpp>
-#include <userver/storages/postgres/exceptions.hpp>
-#include <userver/storages/postgres/io/json_types.hpp>
-#include <userver/storages/postgres/io/optional.hpp>
-#include <userver/storages/postgres/transaction.hpp>
 
 namespace listing_service {
 
@@ -80,13 +70,12 @@ std::string DecreaseAvailabilityHandler::HandleRequestThrow(
     auto result = db_dao_.DecreaseAvailability(variant_id, quantity);
     if (result.IsEmpty()) {
         throw userver::server::handlers::ClientError(
-            userver::server::handlers::ExternalBody{"Unable decrease availability"}
+            userver::server::handlers::ExternalBody{"Invalid variantId"}
         );
     }
 
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
-    response_body["decreased"] = result[0]["decreased"].As<std::int64_t>();
     response_body["remaining"] = result[0]["remaining"].As<std::int64_t>();
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
