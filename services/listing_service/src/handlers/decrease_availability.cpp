@@ -74,10 +74,20 @@ std::string DecreaseAvailabilityHandler::HandleRequestThrow(
 
     ValidatePayload(payload);
 
-    db_dao_.DecreaseAvailability(payload);
+    const auto variant_id = payload["variantId"].As<std::int64_t>();
+    const auto quantity = payload["quantity"].As<std::int64_t>();
+
+    auto result = db_dao_.DecreaseAvailability(variant_id, quantity);
+    if (result.IsEmpty()) {
+        throw userver::server::handlers::ClientError(
+            userver::server::handlers::ExternalBody{"Unable decrease availability"}
+        );
+    }
 
     userver::formats::json::ValueBuilder response_body;
     response_body["status"] = "ok";
+    response_body["decreased"] = result[0]["decreased"].As<std::int64_t>();
+    response_body["remaining"] = result[0]["remaining"].As<std::int64_t>();
 
     http_response.SetContentType(userver::http::content_type::kApplicationJson);
     return userver::formats::json::ToString(response_body.ExtractValue());

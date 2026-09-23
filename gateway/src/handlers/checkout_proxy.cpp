@@ -77,9 +77,7 @@ std::string CheckoutProxyHandler::HandleRequestThrow(
     try {
         for (const auto& row : result) {
             const auto variant_id = row["variantId"].As<std::int64_t>();
-            const auto quantity_to_be_purchased = std::min(http_requests_.GetAvailability(variant_id), row["quantity"].As<std::int64_t>());
-
-            auto decrease_response = http_requests_.DecreaseAvailability(variant_id, quantity_to_be_purchased);
+            auto decrease_response = http_requests_.DecreaseAvailability(variant_id, row["quantity"].As<std::int64_t>());
             if (decrease_response->status_code() != 200) {
                 throw userver::server::handlers::CustomHandlerException(
                     userver::server::handlers::HandlerErrorCode::kConflictState,
